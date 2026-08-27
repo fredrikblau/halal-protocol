@@ -15,8 +15,30 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Detect deep-test paths
+    runs-on: ubuntu-latest
+    outputs:
+      contracts: ${{ steps.filter.outputs.contracts }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4
+        id: filter
+        if: github.event_name == 'pull_request'
+        with:
+          filters: |
+            contracts:
+              - 'contracts/**'
+              - 'scripts/**'
+              - 'Makefile'
+              - '.github/workflows/deep-tests.yml'
+
   fuzz-and-invariants:
     name: Extended fuzzing and invariants
+    needs: changes
+    # Keep the required check visible and successful for docs-only PRs without spending the full
+    # deep-test budget. Scheduled, main-branch, and manually dispatched runs always execute.
+    if: github.event_name != 'pull_request' || needs.changes.outputs.contracts == 'true'
     runs-on: ubuntu-latest
     # Extended fuzzing is intentionally heavier than the PR gate, but it must still fail visibly
     # if a runner or Foundry process stops making progress.
