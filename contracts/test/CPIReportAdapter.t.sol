@@ -257,6 +257,16 @@ contract CPIReportAdapterTest is Test {
         assertEq(psmAdapter.lastSubmittedTimestamp(), 0);
     }
 
+    function test_AcceptsReportAtInclusiveFreshnessBoundary() public {
+        uint256 reportedAt = block.timestamp - adapter.MAX_REPORT_AGE();
+        bytes[] memory signatures = _signReport(1_000_000, reportedAt, SIGNER_ONE_KEY, SIGNER_TWO_KEY);
+
+        adapter.submitReport(1_000_000, reportedAt, signatures);
+
+        assertEq(sink.lastReportTimestamp(), reportedAt);
+        assertEq(adapter.lastSubmittedTimestamp(), reportedAt);
+    }
+
     function test_RevertWhen_SinkRejectsOutOfRangeReport() public {
         MockERC20 reserve = new MockERC20("Mock DAI", "mDAI", 18);
         HalalToken token = new HalalToken(address(this));
