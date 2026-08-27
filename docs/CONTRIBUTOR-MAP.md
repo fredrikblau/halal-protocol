@@ -52,6 +52,9 @@ criteria, and a safe local verification path:
   add role- and state-focused browser checks for health, network, and fail-closed transaction states.
   Contributor [PR #107](https://github.com/fredrikblau/halal-protocol/pull/107) is the current implementation;
   help by reviewing or reproducing its local E2E results.
+- [Test-count documentation synchronization (#111)](https://github.com/fredrikblau/halal-protocol/issues/111) —
+  add a dependency-free check that keeps current-facing test-count references aligned with the Foundry suite;
+  historical changelog and review-log snapshots must remain unchanged.
 - [First Arbitrum Sepolia reference deployment (#40)](https://github.com/fredrikblau/halal-protocol/issues/40) —
   coordinate a reviewed testnet deployment and publish reproducible address, source, health, and
   journal evidence; this requires maintainer coordination and is not a casual copy-paste task.
