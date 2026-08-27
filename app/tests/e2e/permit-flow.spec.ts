@@ -270,6 +270,8 @@ test("renders deployment health without a wallet provider", async ({ page }) => 
 
   await expect(page.getByRole("heading", { name: "Deployment health" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Deployment health", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Deployment checks", level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Selected network", level: 2 })).toBeVisible();
   await expect(page.getByText("Read-only checks from the selected chain.")).toBeVisible();
   await expect(page.getByText("Deployment checks")).toBeVisible();
   await expect(page.getByRole("status", { name: "Overall deployment health" })).toContainText(/Healthy|Review|Blocking|Checking/);
@@ -306,12 +308,13 @@ test("explains a supported network with no configured deployment", async ({ page
   await page.goto("/health");
 
   await expect(page.getByRole("heading", { name: "Deployment health" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "Not deployed on this network" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Not deployed on this network", level: 2 })).toBeVisible();
   await expect(page.getByText(/Halal has no contracts configured for Arbitrum Sepolia yet/)).toBeVisible();
   await expect(page.getByText("Connect to a supported network or check the project's deployment configuration for chain id 421614.")).toBeVisible();
 
   await page.goto("/psm");
-  await expect(page.getByRole("heading", { name: "Not deployed on this network" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "PSM Swap", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Not deployed on this network", level: 2 })).toBeVisible();
   await expect(page.getByRole("button", { name: "Deposit" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Withdraw" })).toHaveCount(0);
   expect(await page.evaluate(() => (window as Window & { __lastTransaction?: unknown }).__lastTransaction)).toBeUndefined();
@@ -322,7 +325,8 @@ test("blocks an unsupported wallet network before signing", async ({ page }) => 
   await page.goto("/psm");
   await connectBrowserWallet(page);
 
-  await expect(page.getByRole("heading", { name: "Unsupported network" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "PSM Swap", level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Unsupported network", level: 2 })).toBeVisible();
   await expect(page.getByText(/Your wallet is connected to a network Halal doesn.t support/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Switch to Arbitrum Sepolia" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Deposit" })).toHaveCount(0);
@@ -787,7 +791,7 @@ test("blocks reserve-deficit health and pauses new PSM deposits", async ({ page 
   const connectButton = page.getByTestId("rk-connect-button");
   if (await connectButton.count()) await connectButton.click();
   await expect(page.getByRole("button", { name: /0xf3.*2266/i })).toBeVisible();
-  await expect(page.getByText("New PSM deposits are paused")).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "New PSM deposits are paused" })).toBeVisible();
   await expect(page.getByText(/The PSM is under-reserved/).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Deposits paused until the protocol is healthy" })).toBeDisabled();
   expect(await page.evaluate(() => (window as Window & { __lastTransaction?: unknown }).__lastTransaction)).toBeUndefined();
@@ -817,7 +821,7 @@ test("blocks stale CPI health and pauses new PSM deposits", async ({ page }) => 
   const connectButton = page.getByTestId("rk-connect-button");
   if (await connectButton.count()) await connectButton.click();
   await expect(page.getByRole("button", { name: /0xf3.*2266/i })).toBeVisible();
-  await expect(page.getByText("New PSM deposits are paused")).toBeVisible();
+  await expect(page.getByRole("alert").filter({ hasText: "New PSM deposits are paused" })).toBeVisible();
   await expect(page.getByText("The CPI source report is stale. Deposits are paused until the updater publishes fresh data.").first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Deposits paused until the protocol is healthy" })).toBeDisabled();
   expect(await page.evaluate(() => (window as Window & { __lastTransaction?: unknown }).__lastTransaction)).toBeUndefined();
