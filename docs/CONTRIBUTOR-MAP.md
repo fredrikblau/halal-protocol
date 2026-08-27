@@ -55,6 +55,9 @@ criteria, and a safe local verification path:
 - [Test-count documentation synchronization (#111)](https://github.com/fredrikblau/halal-protocol/issues/111) —
   add a dependency-free check that keeps current-facing test-count references aligned with the Foundry suite;
   historical changelog and review-log snapshots must remain unchanged.
+- [CPI adapter health-check branch coverage (#112)](https://github.com/fredrikblau/halal-protocol/issues/112) —
+  add offline fake-RPC tests for watermark mismatch, signer-owner overlap, duplicate signers, and invalid
+  quorum metadata; no deployment, wallet, or dependency is needed.
 - [First Arbitrum Sepolia reference deployment (#40)](https://github.com/fredrikblau/halal-protocol/issues/40) —
   coordinate a reviewed testnet deployment and publish reproducible address, source, health, and
   journal evidence; this requires maintainer coordination and is not a casual copy-paste task.
