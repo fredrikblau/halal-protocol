@@ -40,8 +40,6 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
   such as [deployment-manifest source-label testing](https://github.com/fredrikblau/halal-protocol/issues/100),
   [CPI source policy documentation](https://github.com/fredrikblau/halal-protocol/issues/80), or
   [accessibility smoke coverage](https://github.com/fredrikblau/halal-protocol/issues/102).
-- Improve the dApp's inclusive, fail-closed states with the
-  [accessibility smoke-coverage issue](https://github.com/fredrikblau/halal-protocol/issues/102).
 - Help coordinate the first carefully gated [Arbitrum Sepolia deployment](https://github.com/fredrikblau/halal-protocol/issues/40).
 - Review the bounded [security challenge](https://github.com/fredrikblau/halal-protocol/issues/16) or
   [production CPI adapter design](https://github.com/fredrikblau/halal-protocol/issues/17).
