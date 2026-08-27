@@ -41,6 +41,8 @@ criteria, and a safe local verification path:
   record safe Anvil-only wiring and health rehearsals.
 - [Deployment manifest source-label round trip (#100)](https://github.com/fredrikblau/halal-protocol/issues/100) —
   add an offline recorder-to-registry regression test; no RPC, wallet, signing, or deployment is needed.
+  [PR #106](https://github.com/fredrikblau/halal-protocol/pull/106) is the current implementation under review;
+  help by testing it or reviewing edge cases instead of starting a duplicate.
 - [CPI source-label reviewer checklist](CPI-ADAPTER-SPEC.md#reviewer-checklist-before-a-governed-handoff) —
   review the PSM label, adapter source ID, policy record, and deployment evidence before a governed handoff;
   the implementation is complete, so use the open issue list for current contributor tasks.
@@ -48,6 +50,8 @@ criteria, and a safe local verification path:
   document how operators record source identity, cadence, custody, and fallback decisions.
 - [dApp accessibility smoke coverage (#102)](https://github.com/fredrikblau/halal-protocol/issues/102) —
   add role- and state-focused browser checks for health, network, and fail-closed transaction states.
+  Contributor [PR #107](https://github.com/fredrikblau/halal-protocol/pull/107) is the current implementation;
+  help by reviewing or reproducing its local E2E results.
 - [First Arbitrum Sepolia reference deployment (#40)](https://github.com/fredrikblau/halal-protocol/issues/40) —
   coordinate a reviewed testnet deployment and publish reproducible address, source, health, and
   journal evidence; this requires maintainer coordination and is not a casual copy-paste task.
