@@ -36,6 +36,19 @@ export const cpiReportAdapterAbi = [
   },
   {
     "type": "function",
+    "name": "MAX_REPORT_AGE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "MAX_SIGNERS",
     "inputs": [],
     "outputs": [
@@ -571,6 +584,11 @@ export const cpiReportAdapterAbi = [
   {
     "type": "error",
     "name": "ReportTimestampNotIncreasing",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ReportTooOld",
     "inputs": []
   },
   {
