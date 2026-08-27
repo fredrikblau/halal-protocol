@@ -3,6 +3,10 @@ name: Deep contract tests
 on:
   push:
     branches: [main]
+  # This context is required by main branch protection. Run it for pull requests as well as the
+  # scheduled/main-branch assurance pass; otherwise every PR is permanently blocked by a check
+  # that can never be produced for its head commit.
+  pull_request:
   schedule:
     - cron: "17 4 * * 1"
   workflow_dispatch:
