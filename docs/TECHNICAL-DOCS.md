@@ -1,9 +1,9 @@
 # HALAL DAO - TECHNICAL DOCUMENTATION
 
 **Version**: 1.1.0
-**Date**: August 24, 2026
+**Date**: August 27, 2026
 **Network**: Arbitrum (Sepolia & Mainnet)
-**Status**: Unaudited reference implementation | 196 tests passing (183 unit/configuration + 13 invariants) | Not production-ready
+**Status**: Unaudited reference implementation | 199 tests passing (188 unit/configuration + 11 invariants) | Not production-ready
 
 ---
 
@@ -190,7 +190,7 @@ EOF
 ```bash
 # 1. Test locally
 forge test -vvv
-# Expected: 196/196 tests passing ✓
+# Expected: 199/199 tests passing ✓
 
 # 2. Fund wallet with testnet ETH on Arbitrum Sepolia
 # Visit: https://sepoliafaucet.com
@@ -541,9 +541,9 @@ forge coverage
 ✓ test_TimelockPreventsImmediateExecution
 ✓ test_TeamVestingRevocable
 ✓ test_TreasuryVestingNonRevocable
-✓ 183 unit/configuration tests plus 13 stateful PSM invariants covering the core contracts, governance flows, and adversarial reserve boundaries
+✓ 188 unit/configuration tests plus 11 stateful PSM invariants covering the core contracts, governance flows, and adversarial reserve boundaries
 
-Total: 196 tests passing ✓
+Total: 199 tests passing ✓
 ```
 
 ### Verify on Arbiscan
@@ -561,7 +561,7 @@ Total: 196 tests passing ✓
 
 ### Before Deployment
 
-- [ ] All 196 tests passing locally, including the stateful invariants
+- [ ] All 199 tests passing locally, including the stateful invariants
 - [ ] Gas estimates reviewed & acceptable
 - [ ] No compiler warnings
 - [ ] Code review completed
