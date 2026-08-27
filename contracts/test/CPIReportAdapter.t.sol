@@ -224,6 +224,18 @@ contract CPIReportAdapterTest is Test {
         adapter.transferOwnership(signerOne);
     }
 
+    function test_OwnerCanCompleteOwnershipTransferToNonSigner() public {
+        address newOwner = address(0xCAFE);
+        adapter.transferOwnership(newOwner);
+
+        assertEq(adapter.pendingOwner(), newOwner);
+        vm.prank(newOwner);
+        adapter.acceptOwnership();
+
+        assertEq(adapter.owner(), newOwner);
+        assertEq(adapter.pendingOwner(), address(0));
+    }
+
     function test_RevertWhen_PendingOwnerIsAddedAsSigner() public {
         address newOwner = address(0xCAFE);
         adapter.transferOwnership(newOwner);
