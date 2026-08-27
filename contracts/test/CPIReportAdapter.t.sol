@@ -214,6 +214,11 @@ contract CPIReportAdapterTest is Test {
         adapter.addSigner(address(this));
     }
 
+    function test_RevertWhen_ExistingSignerIsAddedAgain() public {
+        vm.expectRevert(CPIReportAdapter.SignerAlreadyConfigured.selector);
+        adapter.addSigner(signerOne);
+    }
+
     function test_RevertWhen_OwnershipTransferTargetsSigner() public {
         vm.expectRevert(CPIReportAdapter.SignerOwnerOverlap.selector);
         adapter.transferOwnership(signerOne);
