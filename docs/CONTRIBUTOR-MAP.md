@@ -48,6 +48,10 @@ criteria, and a safe local verification path:
   document how operators record source identity, cadence, custody, and fallback decisions.
 - [dApp accessibility smoke coverage (#102)](https://github.com/fredrikblau/halal-protocol/issues/102) —
   add role- and state-focused browser checks for health, network, and fail-closed transaction states.
+- [Protocol glossary (#117)](https://github.com/fredrikblau/halal-protocol/issues/117) —
+  define the project's core terms and link each definition to the current source of truth.
+- [Clean-clone environment verification (#118)](https://github.com/fredrikblau/halal-protocol/issues/118) —
+  run the contributor quickstart on another environment and document reproducible setup friction.
 - [First Arbitrum Sepolia reference deployment (#40)](https://github.com/fredrikblau/halal-protocol/issues/40) —
   coordinate a reviewed testnet deployment and publish reproducible address, source, health, and
   journal evidence; this requires maintainer coordination and is not a casual copy-paste task.
