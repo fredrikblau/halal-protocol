@@ -23,6 +23,7 @@ contract CPIReportAdapter is EIP712, Ownable2Step, ReentrancyGuard {
     bytes32 public constant REPORT_TYPEHASH =
         keccak256("CPIReport(uint256 reportedCPI,uint256 reportedAt,bytes32 sourceId)");
     uint256 public constant MAX_SIGNERS = 64;
+    uint256 public constant MAX_REPORT_AGE = 90 days;
 
     ICPIReportSink public immutable psm;
     bytes32 public immutable sourceId;
@@ -46,6 +47,7 @@ contract CPIReportAdapter is EIP712, Ownable2Step, ReentrancyGuard {
     error UnauthorizedSigner();
     error SignaturesNotSorted();
     error InvalidReportTimestamp();
+    error ReportTooOld();
     error ReportTimestampNotIncreasing();
     error ReportNotAccepted();
 
@@ -160,6 +162,10 @@ contract CPIReportAdapter is EIP712, Ownable2Step, ReentrancyGuard {
         // forwarding a report that its sink could accept but the adapter's own watermark could not.
         // forge-lint: disable-next-line(block-timestamp)
         if (reportedAt == 0 || reportedAt > block.timestamp) revert InvalidReportTimestamp();
+        // Keep the adapter safe even if it is ever pointed at a sink that does not enforce the
+        // PSM's freshness bound. This value intentionally matches HalalPSM.MAX_REPORT_AGE.
+        // forge-lint: disable-next-line(block-timestamp)
+        if (block.timestamp - reportedAt > MAX_REPORT_AGE) revert ReportTooOld();
         if (reportedAt <= lastSubmittedTimestamp) revert ReportTimestampNotIncreasing();
         if (signatures.length != threshold) revert InvalidSignatureCount();
 

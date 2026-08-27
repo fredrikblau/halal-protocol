@@ -133,8 +133,9 @@ parser, or custody review.
 The adapter and operator must apply these rules:
 
 1. A missing, malformed, delayed, or disputed source report produces no PSM update.
-2. A stale watermark causes the PSM to reject new deposits. Existing valid redemption credits
-   remain subject to reserve and accounting checks.
+2. The adapter rejects reports older than 90 days, and the PSM independently rejects a stale
+   accepted-report watermark, so stale signed data cannot bootstrap or resume normal deposits.
+   Existing valid redemption credits remain subject to reserve and accounting checks.
 3. An adapter outage does not trigger an automatic fallback to an unreviewed source.
 4. Governance may use `mockCPI` for an explicit emergency correction. The proposal must record the
    reason, value, reserve impact, source evidence, and follow-up action.
@@ -159,9 +160,9 @@ CPIReport(uint256 reportedCPI,uint256 reportedAt,bytes32 sourceId)
 ```
 
 The submitter must provide exactly `threshold` signatures, ordered by recovered signer address in
-strictly ascending order. The adapter rejects future or non-increasing publication timestamps,
-tracks the last forwarded timestamp, binds each signature to the adapter's immutable `sourceId`,
-and protects its PSM call with a reentrancy guard. `Ownable2Step` controls signer rotation and
+strictly ascending order. The adapter rejects future, older-than-90-day, or non-increasing
+publication timestamps, tracks the last forwarded timestamp, binds each signature to the adapter's
+immutable `sourceId`, and protects its PSM call with a reentrancy guard. `Ownable2Step` controls signer rotation and
 threshold changes. The signer set is capped at `MAX_SIGNERS = 64` so governance cannot expand
 signature verification until reports exceed practical block-gas limits; production deployments
 should use the smallest independently governed quorum that meets their custody policy. The owner
