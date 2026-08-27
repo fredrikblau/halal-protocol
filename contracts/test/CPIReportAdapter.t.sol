@@ -371,6 +371,15 @@ contract CPIReportAdapterTest is Test {
         harness.buildHandoff(address(sink), address(adapter), " \t\n", address(0));
     }
 
+    function test_RevertWhen_HandoffSourceIsFormFeedOrVerticalTabOnly() public {
+        CPIAdapterGovernanceHarness harness = new CPIAdapterGovernanceHarness();
+        vm.expectRevert(CPIAdapterGovernance.EmptySource.selector);
+        harness.buildHandoff(address(sink), address(adapter), string(abi.encodePacked(bytes1(0x0b))), address(0));
+
+        vm.expectRevert(CPIAdapterGovernance.EmptySource.selector);
+        harness.buildHandoff(address(sink), address(adapter), string(abi.encodePacked(bytes1(0x0c))), address(0));
+    }
+
     function _signReport(uint256 reportedCPI, uint256 reportedAt, uint256 firstKey)
         internal
         view
