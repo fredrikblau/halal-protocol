@@ -43,8 +43,8 @@ criteria, and a safe local verification path:
 - [CPI source policy documentation (#80)](https://github.com/fredrikblau/halal-protocol/issues/80) —
   document how operators record source identity, cadence, custody, and fallback decisions.
 - [Rebasing reserve-token model (#159)](https://github.com/fredrikblau/halal-protocol/issues/159) —
-  add a deterministic balance-changing reserve mock and focused/invariant coverage without changing
-  production deployment policy.
+  currently claimed in [PR #160](https://github.com/fredrikblau/halal-protocol/pull/160); review and
+  alternative edge cases remain welcome.
 - The [accounting-aware transfer validation task (#156)](https://github.com/fredrikblau/halal-protocol/issues/156) is
   currently claimed in [PR #157](https://github.com/fredrikblau/halal-protocol/pull/157); review and follow-up
   improvements remain welcome.
