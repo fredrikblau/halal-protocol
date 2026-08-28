@@ -10,6 +10,7 @@ checkout before choosing an issue.
 The current security review scope is [issue #16](https://github.com/fredrikblau/halal-protocol/issues/16).
 Start there if you want to inspect the PSM, CPI boundaries, reserve assumptions, or governance
 operations. Report fund-risking findings through [`SECURITY.md`](../SECURITY.md), not the issue.
+For a bounded way to help unblock the review queue, see the [independent reviewer call](https://github.com/fredrikblau/halal-protocol/discussions/154).
 
 ## Good first issues
 

@@ -50,7 +50,9 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
 - Help coordinate the first carefully gated [Arbitrum Sepolia deployment](https://github.com/fredrikblau/halal-protocol/issues/40).
 - Review the bounded [security challenge](https://github.com/fredrikblau/halal-protocol/issues/16) or
   [production CPI adapter design](https://github.com/fredrikblau/halal-protocol/issues/17).
-- Use [Discussions](https://github.com/fredrikblau/halal-protocol/discussions) for design questions.
+- Use [Discussions](https://github.com/fredrikblau/halal-protocol/discussions) for design questions;
+  join the [independent reviewer call](https://github.com/fredrikblau/halal-protocol/discussions/154)
+  if you want to review accounting, CPI, governance, deployment evidence, or contributor tooling.
 - Report security vulnerabilities through [`SECURITY.md`](SECURITY.md), not a public issue.
 
 ## Why this project is interesting
