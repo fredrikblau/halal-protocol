@@ -123,7 +123,7 @@ parser, or custody review.
       reviewed, and no signer overlaps the owner or relies on undocumented custody.
 - [ ] The zero-value handoff calldata grants the adapter before revoking the old updater, changes
       the source label, and contains no unrelated action; offline preflight passes.
-- [ ] Before and after the first report, the operator records role events, adapter/PSM watermarks,
+- [ ] Before and after the first report, the operator records role events, adapter/PSM CPI values and watermarks,
       health output, report transaction, and the deployment journal entry.
 - [ ] A source or parser change is treated as a new review: prepare the replacement, verify its
       first report, then revoke the old updater; do not use `mockCPI` as an unreviewed fallback.
@@ -241,8 +241,8 @@ node scripts/verify-cpi-report.mjs \
 ```
 
 Read the signer addresses from the deployment health output or `CPIReportAdapter.getSigners()`.
-The verifier reads the live adapter's chain ID, PSM binding, source ID, threshold, signer set, and
-report watermark through the RPC. It also reads the PSM's report watermark, freshness window, and
+The verifier reads the live adapter's chain ID, PSM binding, source ID, threshold, signer set, submitted CPI,
+and report watermark through the RPC. It also reads the PSM's CPI rate, report watermark, freshness window, and
 current block time. It rejects stale, replayed, future, or already-consumed reports before it
 recovers signatures. The tool keeps private keys out of the process, requires one 65-byte signature
 per configured signer in strict address order, and delegates EIP-712 recovery to Foundry's
@@ -299,7 +299,7 @@ transaction hash, and the health-check output for each accepted report. The BLS 
 `source.responseSha256`, the SHA-256 of the exact input response bytes, so the normalized report can
 be paired with the archived source artifact without relying on JSON reserialization.
 The adapter reads the sink's public `lastReportTimestamp()` and `cpiRate()` after every forwarded
-report and only updates `lastSubmittedTimestamp` when both equal the submitted report. The adapter
+report and only updates `lastSubmittedTimestamp` and `lastSubmittedCPI` when both equal the submitted report. The adapter
 and sink values must remain aligned; a mismatch indicates a different updater, an incomplete
 handoff, or an unexpected state transition that requires investigation.
 

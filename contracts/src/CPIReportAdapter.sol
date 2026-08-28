@@ -33,6 +33,7 @@ contract CPIReportAdapter is EIP712, Ownable2Step, ReentrancyGuard {
     uint256 public signerCount;
     uint256 public threshold;
     uint256 public lastSubmittedTimestamp;
+    uint256 public lastSubmittedCPI;
 
     error ZeroAddress();
     error NotContract();
@@ -181,6 +182,7 @@ contract CPIReportAdapter is EIP712, Ownable2Step, ReentrancyGuard {
             revert ReportNotAccepted();
         }
         lastSubmittedTimestamp = reportedAt;
+        lastSubmittedCPI = reportedCPI;
         emit ReportSubmitted(reportedAt, reportedCPI, signatures.length);
     }
 }

@@ -80,7 +80,7 @@ conservative accounting model:
 | Does governance decode CPI adapter actions? | The dApp includes the generated `CPIReportAdapter` ABI for signer, threshold, ownership, and report actions |
 | Can the active CPI signer set be audited? | `CPIReportAdapter.getSigners()` and `check-psm-health.sh` expose the current addresses after each rotation |
 | Does the dApp show adapter custody state? | The dashboard and PSM page show the live adapter owner, source ID, quorum, signers, and last submitted report |
-| Does the dApp verify adapter/PSM report alignment? | It compares the adapter watermark with the PSM's accepted-report watermark and flags divergence |
+| Does the dApp verify adapter/PSM report alignment? | It compares the adapter's submitted CPI and report watermark with the PSM and flags divergence |
 | Can an operator inspect deployment health without a wallet? | The read-only [`/health` page](https://github.com/fredrikblau/halal-protocol/tree/main/app/src/app/health) checks contract wiring, CPI freshness, reserve coverage, and adapter alignment |
 | Does the dApp expose deployment evidence? | The dashboard shows the registry's deployment transaction, verified-source, and deployment-journal links when they are published |
 | Can I inspect the CPI timeline? | The dashboard reads recent `CPIUpdated` events with block, transaction, source, and rate-change context |

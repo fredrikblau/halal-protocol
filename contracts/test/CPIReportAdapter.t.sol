@@ -77,6 +77,7 @@ contract CPIReportAdapterTest is Test {
         assertEq(sink.lastReportTimestamp(), reportedAt);
         assertEq(sink.lastCaller(), address(adapter));
         assertEq(adapter.lastSubmittedTimestamp(), reportedAt);
+        assertEq(adapter.lastSubmittedCPI(), 1_010_000);
     }
 
     function test_ForwardsReportToHalalPSM() public {
@@ -221,6 +222,7 @@ contract CPIReportAdapterTest is Test {
         noOpAdapter.submitReport(1_000_000, reportedAt, signatures);
 
         assertEq(noOpAdapter.lastSubmittedTimestamp(), 0);
+        assertEq(noOpAdapter.lastSubmittedCPI(), 0);
     }
 
     function test_RevertWhen_SinkStoresDifferentCpiThanSubmitted() public {
@@ -238,6 +240,7 @@ contract CPIReportAdapterTest is Test {
         mismatchedAdapter.submitReport(1_000_000, reportedAt, signatures);
 
         assertEq(mismatchedAdapter.lastSubmittedTimestamp(), 0);
+        assertEq(mismatchedAdapter.lastSubmittedCPI(), 0);
     }
 
     function test_RevertWhen_OwnerIsAddedAsSigner() public {

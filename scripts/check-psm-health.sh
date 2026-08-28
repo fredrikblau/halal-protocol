@@ -112,6 +112,7 @@ address_call() {
 now="$(cast block latest --field timestamp --rpc-url "$RPC_URL")"
 reserve_surplus="$(call 'reserveSurplus()(int256)')"
 last_report="$(call 'lastReportTimestamp()(uint256)')"
+cpi_rate="$(call 'cpiRate()(uint256)')"
 max_report_age="$(call 'MAX_REPORT_AGE()(uint256)')"
 last_updated="$(call 'lastUpdated()(uint256)')"
 min_update_interval="$(call 'minUpdateInterval()(uint256)')"
@@ -120,11 +121,13 @@ cpi_source="$(call 'source()(string)' | sed -e 's/^"//' -e 's/"$//')"
 require_uint "checked_at" "$now"
 require_int "reserve_surplus" "$reserve_surplus"
 require_uint "last_report_timestamp" "$last_report"
+require_uint "cpi_rate" "$cpi_rate"
 require_uint "max_report_age" "$max_report_age"
 require_uint "last_updated" "$last_updated"
 require_uint "min_update_interval" "$min_update_interval"
 require_bash_uint "checked_at" "$now"
 require_bash_uint "last_report_timestamp" "$last_report"
+require_bash_uint "cpi_rate" "$cpi_rate"
 require_bash_uint "max_report_age" "$max_report_age"
 require_bash_uint "last_updated" "$last_updated"
 require_bash_uint "min_update_interval" "$min_update_interval"
@@ -133,6 +136,7 @@ echo "psm=$PSM"
 echo "checked_at=$now"
 echo "reserve_surplus=$reserve_surplus"
 echo "last_report_timestamp=$last_report"
+echo "cpi_rate=$cpi_rate"
 echo "max_report_age=$max_report_age"
 echo "last_updated=$last_updated"
 echo "min_update_interval=$min_update_interval"
@@ -166,18 +170,22 @@ if [[ -n "${CPI_ADAPTER:-}" ]]; then
   adapter_threshold="$(call_at "$CPI_ADAPTER" 'threshold()(uint256)')"
   adapter_signer_count="$(call_at "$CPI_ADAPTER" 'signerCount()(uint256)')"
   adapter_last_submitted="$(call_at "$CPI_ADAPTER" 'lastSubmittedTimestamp()(uint256)')"
+  adapter_last_submitted_cpi="$(call_at "$CPI_ADAPTER" 'lastSubmittedCPI()(uint256)')"
   require_uint "adapter_threshold" "$adapter_threshold"
   require_uint "adapter_signer_count" "$adapter_signer_count"
   require_uint "adapter_last_submitted_timestamp" "$adapter_last_submitted"
+  require_uint "adapter_last_submitted_cpi" "$adapter_last_submitted_cpi"
   require_bash_uint "adapter_threshold" "$adapter_threshold"
   require_bash_uint "adapter_signer_count" "$adapter_signer_count"
   require_bash_uint "adapter_last_submitted_timestamp" "$adapter_last_submitted"
+  require_bash_uint "adapter_last_submitted_cpi" "$adapter_last_submitted_cpi"
   echo "cpi_adapter=$CPI_ADAPTER"
   echo "cpi_adapter_owner=$adapter_owner"
   echo "cpi_adapter_source_id=$adapter_source_id"
   echo "cpi_adapter_threshold=$adapter_threshold"
   echo "cpi_adapter_signer_count=$adapter_signer_count"
   echo "cpi_adapter_last_submitted_timestamp=$adapter_last_submitted"
+  echo "cpi_adapter_last_submitted_cpi=$adapter_last_submitted_cpi"
   signer_addresses=()
   if [[ "$adapter_signer_count" =~ ^[0-9]+$ ]]; then
     for (( signer_index = 0; signer_index < adapter_signer_count; signer_index++ )); do
@@ -224,6 +232,11 @@ if [[ -n "${CPI_ADAPTER:-}" ]]; then
   if [[ "$adapter_last_submitted" != "$last_report" ]]; then
     echo "status=unhealthy"
     echo "reason=cpi_adapter_watermark_mismatch"
+    failure=1
+  fi
+  if [[ "$adapter_last_submitted_cpi" != "$cpi_rate" ]]; then
+    echo "status=unhealthy"
+    echo "reason=cpi_adapter_rate_mismatch"
     failure=1
   fi
 fi
