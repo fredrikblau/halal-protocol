@@ -278,7 +278,9 @@ jobs:
         run: cd .. && ./scripts/local-app-smoke.sh
 
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        # Browser downloads can hang independently of the test process. Bound installation so a
+        # runner or package mirror issue becomes an actionable CI failure.
+        run: timeout --signal=TERM --kill-after=30s 10m pnpm exec playwright install --with-deps chromium
 
       - name: Browser permit-flow test
         # Keep a hung browser or child server from leaving a required check pending forever. The
