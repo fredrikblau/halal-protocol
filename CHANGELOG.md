@@ -7,7 +7,7 @@ All notable changes to this project are documented here.
 - Added governance-boundary regression coverage for CPI adapter signer duplication and two-step
   ownership acceptance, plus DAO quorum and timelock policy behavior.
 - Synchronized current contributor, technical, governance, architecture, and security-review
-  documentation with the 199-test Solidity suite (186 unit/configuration tests and 13 invariants).
+  documentation with the 199-test Solidity suite (188 ordinary tests and 11 stateful invariants).
 
 ## 0.1.0-alpha.266 - 2026-08-27
 
