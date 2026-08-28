@@ -1,2 +1,3 @@
-# Contract and deployment changes deserve review from the repository maintainer.
+# Contract and deployment changes should request review from the repository maintainer.
+# Branch protection still requires an independent approval, but does not require one specific account.
 * @fredrikblau
