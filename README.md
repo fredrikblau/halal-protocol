@@ -44,6 +44,8 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
 - Run `make verify` before opening a pull request.
 - Pick a bounded task from the [open good-first-issue list](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22),
   such as [CPI source policy documentation](https://github.com/fredrikblau/halal-protocol/issues/80).
+- The [clean-clone verification task](https://github.com/fredrikblau/halal-protocol/issues/118) is a
+  documentation-only second-environment check with no wallet, RPC credentials, deployment, or real-funds scope.
 - The [rebasing reserve-token model](https://github.com/fredrikblau/halal-protocol/issues/159) is
   currently claimed in [PR #160](https://github.com/fredrikblau/halal-protocol/pull/160); review and
   alternative edge cases remain welcome.

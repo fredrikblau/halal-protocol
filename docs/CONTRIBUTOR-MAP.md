@@ -42,6 +42,9 @@ criteria, and a safe local verification path:
   record safe Anvil-only wiring and health rehearsals.
 - [CPI source policy documentation (#80)](https://github.com/fredrikblau/halal-protocol/issues/80) —
   document how operators record source identity, cadence, custody, and fallback decisions.
+- [Clean-clone quickstart verification (#118)](https://github.com/fredrikblau/halal-protocol/issues/118) —
+  run the contributor quickstart on a second environment and record reproducible setup evidence without
+  wallets, RPC credentials, deployment, or real funds.
 - [Rebasing reserve-token model (#159)](https://github.com/fredrikblau/halal-protocol/issues/159) —
   currently claimed in [PR #160](https://github.com/fredrikblau/halal-protocol/pull/160); review and
   alternative edge cases remain welcome.
