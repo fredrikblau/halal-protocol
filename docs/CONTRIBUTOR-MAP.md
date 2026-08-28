@@ -57,6 +57,9 @@ criteria, and a safe local verification path:
 - [Independent protocol reviewer (#126)](https://github.com/fredrikblau/halal-protocol/issues/126) —
   review an open protocol or tooling PR with reproducible, no-credentials evidence and help establish a
   trusted reviewer rotation.
+- [CPI adapter deployment configuration coverage (#150)](https://github.com/fredrikblau/halal-protocol/issues/150) —
+  add offline tests for the complete chain, custody, signer, threshold, and source-ID validation gate;
+  no RPC, private key, or broadcast is needed.
 - [First Arbitrum Sepolia reference deployment (#40)](https://github.com/fredrikblau/halal-protocol/issues/40) —
   coordinate a reviewed testnet deployment and publish reproducible address, source, health, and
   journal evidence; this requires maintainer coordination and is not a casual copy-paste task.
