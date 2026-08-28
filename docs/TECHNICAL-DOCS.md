@@ -3,7 +3,7 @@
 **Version**: 1.1.0
 **Date**: August 24, 2026
 **Network**: Arbitrum (Sepolia & Mainnet)
-**Status**: Unaudited reference implementation | 196 tests passing (183 unit/configuration + 13 invariants) | Not production-ready
+**Status**: Unaudited reference implementation | 196 tests passing (185 unit/configuration + 11 invariants) | Not production-ready
 
 ---
 
@@ -541,7 +541,7 @@ forge coverage
 ✓ test_TimelockPreventsImmediateExecution
 ✓ test_TeamVestingRevocable
 ✓ test_TreasuryVestingNonRevocable
-✓ 183 unit/configuration tests plus 13 stateful PSM invariants covering the core contracts, governance flows, and adversarial reserve boundaries
+✓ 185 unit/configuration tests plus 11 stateful PSM invariants covering the core contracts, governance flows, and adversarial reserve boundaries
 
 Total: 196 tests passing ✓
 ```

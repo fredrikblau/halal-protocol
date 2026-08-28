@@ -213,7 +213,7 @@ Result: CPI rate is updated; the purchasing-power target changes subject to orac
 ## Test Coverage Summary
 
 ```
-Foundry test suite (196 tests: 183 unit/configuration + 13 stateful invariants)
+Foundry test suite (196 tests: 185 unit/configuration + 11 stateful invariants)
 
 ✓ Initialization Tests
   ├─ test_InitialState                    → 10M HLC in vesting
@@ -281,7 +281,7 @@ Based on `forge build --gas-report`:
 | File | Size | Purpose |
 |------|------|---------|
 | `contracts/src/` | First-party protocol contracts |
-| `contracts/test/` | 196 tests (183 unit/configuration + 13 stateful PSM invariants) and fixtures |
+| `contracts/test/` | 196 tests (185 unit/configuration + 11 stateful PSM invariants) and fixtures |
 | `contracts/script/` | Deployment and proposal examples |
 | `app/src/` | Next.js frontend |
 | `docs/` | Protocol and operational documentation |

@@ -8,7 +8,7 @@ the [root README](../README.md) and [`../docs/`](../docs).
 ## Layout
 
 - `src/` — the five core contracts plus the optional CPI report adapter.
-- `test/` — Foundry test suite (189 tests at the time of writing: 178 unit/configuration tests plus 11 stateful
+- `test/` — Foundry test suite (196 tests at the time of writing: 185 unit/configuration tests plus 11 stateful
   PSM invariants; run `forge test` to confirm).
 - `script/Deploy.s.sol` — full deployment script (token, vesting, DAO, timelock, role wiring).
 - `script/DeployCPIReportAdapter.s.sol` — chain-guarded optional adapter deployment; it does not
