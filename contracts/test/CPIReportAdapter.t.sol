@@ -23,8 +23,22 @@ contract CPIAdapterGovernanceHarness {
 contract MockNoOpCPIReportSink {
     function updateCPIWithTimestamp(uint256, uint256) external { }
 
+    function cpiRate() external pure returns (uint256) {
+        return 0;
+    }
+
     function lastReportTimestamp() external pure returns (uint256) {
         return 0;
+    }
+}
+
+contract MockMismatchedCPIReportSink {
+    uint256 public cpiRate;
+    uint256 public lastReportTimestamp;
+
+    function updateCPIWithTimestamp(uint256 reportedCPI, uint256 reportedAt) external {
+        cpiRate = reportedCPI + 1;
+        lastReportTimestamp = reportedAt;
     }
 }
 
@@ -207,6 +221,23 @@ contract CPIReportAdapterTest is Test {
         noOpAdapter.submitReport(1_000_000, reportedAt, signatures);
 
         assertEq(noOpAdapter.lastSubmittedTimestamp(), 0);
+    }
+
+    function test_RevertWhen_SinkStoresDifferentCpiThanSubmitted() public {
+        MockMismatchedCPIReportSink mismatchedSink = new MockMismatchedCPIReportSink();
+        address[] memory signers = new address[](2);
+        signers[0] = signerOne;
+        signers[1] = signerTwo;
+        CPIReportAdapter mismatchedAdapter =
+            new CPIReportAdapter(address(mismatchedSink), address(this), signers, 2, SOURCE_ID);
+        uint256 reportedAt = block.timestamp - 1;
+        bytes[] memory signatures =
+            _signReportFor(mismatchedAdapter, 1_000_000, reportedAt, SIGNER_ONE_KEY, SIGNER_TWO_KEY);
+
+        vm.expectRevert(CPIReportAdapter.ReportNotAccepted.selector);
+        mismatchedAdapter.submitReport(1_000_000, reportedAt, signatures);
+
+        assertEq(mismatchedAdapter.lastSubmittedTimestamp(), 0);
     }
 
     function test_RevertWhen_OwnerIsAddedAsSigner() public {

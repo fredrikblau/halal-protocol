@@ -9,6 +9,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 
 interface ICPIReportSink {
     function updateCPIWithTimestamp(uint256 reportedCPI, uint256 reportedAt) external;
+    function cpiRate() external view returns (uint256);
     function lastReportTimestamp() external view returns (uint256);
 }
 
@@ -176,7 +177,9 @@ contract CPIReportAdapter is EIP712, Ownable2Step, ReentrancyGuard {
         // A successful external call is not proof that the configured sink accepted the report.
         // HalalPSM exposes this watermark; require it to advance before recording adapter state so
         // a no-op or incompatible sink cannot make the adapter look healthy.
-        if (psm.lastReportTimestamp() != reportedAt) revert ReportNotAccepted();
+        if (psm.lastReportTimestamp() != reportedAt || psm.cpiRate() != reportedCPI) {
+            revert ReportNotAccepted();
+        }
         lastSubmittedTimestamp = reportedAt;
         emit ReportSubmitted(reportedAt, reportedCPI, signatures.length);
     }

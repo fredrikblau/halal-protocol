@@ -54,8 +54,8 @@ sequenceDiagram
     Adapter->>PSM: updateCPIWithTimestamp(value, release time)
     PSM->>PSM: Check bounds, step, cadence, reserve, freshness, and watermark
     PSM-->>Adapter: Accept or revert
-    Adapter->>PSM: Read lastReportTimestamp()
-    Adapter->>Adapter: Require the sink watermark equals the report timestamp
+    Adapter->>PSM: Read lastReportTimestamp() and cpiRate()
+    Adapter->>Adapter: Require the sink timestamp and CPI rate equal the signed report
     Adapter-->>Relayer: Emit report acceptance or revert
 ```
 
@@ -141,9 +141,10 @@ The adapter and operator must apply these rules:
 5. A compromised updater must be revoked through the timelock. Operators must preserve report and
    custody evidence for incident review.
 
-6. A sink call that returns successfully but does not advance `lastReportTimestamp` is rejected by
-   the adapter. This keeps `lastSubmittedTimestamp` from claiming acceptance when the configured
-   sink is a no-op or incompatible contract.
+6. A sink call that returns successfully but does not set both `lastReportTimestamp` and `cpiRate`
+   to the submitted report is rejected by the adapter. This keeps `lastSubmittedTimestamp` from
+   claiming acceptance when the configured sink is a no-op, incompatible, or rate-mismatching
+   contract.
 
 The adapter must not treat a successful transaction as proof that the source was correct. The PSM
 only proves that the report satisfied its on-chain constraints.
@@ -297,10 +298,10 @@ The operator must retain the source response, parser version, report timestamp, 
 transaction hash, and the health-check output for each accepted report. The BLS parser includes
 `source.responseSha256`, the SHA-256 of the exact input response bytes, so the normalized report can
 be paired with the archived source artifact without relying on JSON reserialization.
-The adapter reads the sink's public `lastReportTimestamp()` after every forwarded report and only
-updates `lastSubmittedTimestamp` when it equals the submitted timestamp. The two values must remain
-equal; a mismatch indicates a different updater, an incomplete handoff, or an unexpected state
-transition that requires investigation.
+The adapter reads the sink's public `lastReportTimestamp()` and `cpiRate()` after every forwarded
+report and only updates `lastSubmittedTimestamp` when both equal the submitted report. The adapter
+and sink values must remain aligned; a mismatch indicates a different updater, an incomplete
+handoff, or an unexpected state transition that requires investigation.
 
 ## Acceptance tests
 
