@@ -168,6 +168,8 @@ walkthrough, and the exact API surface — see:
   worksheet for operational failures and recovery evidence.
 - [`docs/CONTRIBUTOR-MAP.md`](docs/CONTRIBUTOR-MAP.md) — concrete contribution paths for security,
   oracle integrations, monitoring, economics, governance, dApp UX, and documentation.
+- [`docs/GLOSSARY.md`](docs/GLOSSARY.md) — concise definitions of the protocol terms used by the
+  contracts, documentation, and contributor issues.
 - [`docs/LOCAL-CPI-REPORT-WALKTHROUGH.md`](docs/LOCAL-CPI-REPORT-WALKTHROUGH.md) — copy-paste local
   CPI report preparation and verification lifecycle.
 - [Security review challenge #16](https://github.com/fredrikblau/halal-protocol/issues/16) — a bounded

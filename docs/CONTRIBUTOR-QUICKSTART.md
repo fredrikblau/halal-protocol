@@ -3,6 +3,9 @@
 This is the shortest safe path from a clean clone to a first useful contribution. It assumes
 Git, Foundry (`forge`, `anvil`, and `cast`), Node.js 22+, and pnpm 11 are already installed.
 
+If a protocol term is unfamiliar while choosing a task, use the [protocol glossary](GLOSSARY.md)
+before searching through the full contract sources.
+
 ## 1. Clone and verify the toolchain
 
 ```shell

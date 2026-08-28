@@ -7,6 +7,9 @@ that another reviewer can check.
 New contributors can use the [ten-minute quickstart](CONTRIBUTOR-QUICKSTART.md) to verify a clean
 checkout before choosing an issue.
 
+Use the [protocol glossary](GLOSSARY.md) for concise definitions and links to the implementation
+of the terms used throughout this map.
+
 The current security review scope is [issue #16](https://github.com/fredrikblau/halal-protocol/issues/16).
 Start there if you want to inspect the PSM, CPI boundaries, reserve assumptions, or governance
 operations. Report fund-risking findings through [`SECURITY.md`](../SECURITY.md), not the issue.
