@@ -32,7 +32,9 @@ if [[ "$ANVIL_PORT" == "$APP_PORT" ]]; then
 fi
 
 cleanup() {
-  if [[ -n "$APP_PID" ]]; then kill "$APP_PID" 2>/dev/null || true; fi
+  if [[ -n "$APP_PID" ]]; then
+    kill -- -"$APP_PID" 2>/dev/null || kill "$APP_PID" 2>/dev/null || true
+  fi
   if [[ -n "$ANVIL_PID" ]]; then kill "$ANVIL_PID" 2>/dev/null || true; fi
   if [[ -n "$APP_ENV_BACKUP" && -f "$APP_ENV_BACKUP" ]]; then
     mv -f "$APP_ENV_BACKUP" "$APP_ENV_FILE"
@@ -128,9 +130,6 @@ LOCAL_DEPLOYMENT_BLOCK="$(cast block latest --field number --rpc-url "$LOCAL_RPC
 
 echo "Temporary frontend configuration written to app/.env.local (restored on exit)"
 echo "Starting the dApp at http://localhost:${APP_PORT} (Ctrl-C to stop both processes)..."
-(
-  cd "$ROOT_DIR/app"
-  pnpm dev --hostname 127.0.0.1 --port "$APP_PORT"
-) &
+setsid pnpm --dir "$ROOT_DIR/app" dev --hostname 127.0.0.1 --port "$APP_PORT" &
 APP_PID=$!
 wait "$APP_PID"
