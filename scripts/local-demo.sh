@@ -15,6 +15,22 @@ APP_ENV_FILE="$ROOT_DIR/app/.env.local"
 APP_ENV_BACKUP=""
 APP_ENV_CREATED="false"
 
+require_port() {
+  local label="$1"
+  local value="$2"
+  if [[ ! "$value" =~ ^[0-9]{1,5}$ ]] || (( value < 1 || value > 65535 )); then
+    echo "$label must be an integer between 1 and 65535 (got $value)" >&2
+    exit 1
+  fi
+}
+
+require_port "ANVIL_PORT" "$ANVIL_PORT"
+require_port "APP_PORT" "$APP_PORT"
+if [[ "$ANVIL_PORT" == "$APP_PORT" ]]; then
+  echo "ANVIL_PORT and APP_PORT must be different (both are $ANVIL_PORT)" >&2
+  exit 1
+fi
+
 cleanup() {
   if [[ -n "$APP_PID" ]]; then kill "$APP_PID" 2>/dev/null || true; fi
   if [[ -n "$ANVIL_PID" ]]; then kill "$ANVIL_PID" 2>/dev/null || true; fi
