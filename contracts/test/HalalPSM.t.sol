@@ -1107,6 +1107,50 @@ contract HalalPSMTest is Deployers {
         assertEq(token.balanceOf(recipient), amount);
         assertEq(psm.redeemableBalance(permitAlice), 60e18);
         assertEq(psm.redeemableBalance(recipient), amount);
+
+        _assertPermitTransferRejectsZeroRecipient();
+        _assertPermitTransferRejectsZeroAmount();
+    }
+
+    function _assertPermitTransferRejectsZeroRecipient() internal {
+        (address permitAlice, uint256 permitAliceKey) = makeAddrAndKey("permitZeroRecipient");
+        reserve.mint(permitAlice, 100e18);
+        vm.startPrank(permitAlice);
+        reserve.approve(address(psm), 100e18);
+        psm.deposit(100e18);
+        vm.stopPrank();
+
+        uint256 amount = 40e18;
+        uint256 deadline = block.timestamp + 1 hours;
+        (uint8 v, bytes32 r, bytes32 s) =
+            _permitSignature(address(token), permitAlice, address(psm), amount, deadline, permitAliceKey);
+
+        vm.prank(permitAlice);
+        vm.expectRevert(HalalPSM.ZeroAddress.selector);
+        psm.transferRedeemableWithPermit(address(0), amount, deadline, v, r, s);
+
+        assertEq(psm.redeemableBalance(permitAlice), 100e18);
+        assertEq(token.nonces(permitAlice), 0);
+    }
+
+    function _assertPermitTransferRejectsZeroAmount() internal {
+        (address permitAlice, uint256 permitAliceKey) = makeAddrAndKey("permitZeroAmount");
+        reserve.mint(permitAlice, 100e18);
+        vm.startPrank(permitAlice);
+        reserve.approve(address(psm), 100e18);
+        psm.deposit(100e18);
+        vm.stopPrank();
+
+        uint256 deadline = block.timestamp + 1 hours;
+        (uint8 v, bytes32 r, bytes32 s) =
+            _permitSignature(address(token), permitAlice, address(psm), 0, deadline, permitAliceKey);
+
+        vm.prank(permitAlice);
+        vm.expectRevert(HalalPSM.ZeroAmount.selector);
+        psm.transferRedeemableWithPermit(makeAddr("permitNonZeroRecipient"), 0, deadline, v, r, s);
+
+        assertEq(psm.redeemableBalance(permitAlice), 100e18);
+        assertEq(token.nonces(permitAlice), 0);
     }
 
     function test_RedeemableBalanceTracksDepositsAndWithdrawals() public {
