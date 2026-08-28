@@ -76,7 +76,7 @@ conservative accounting model:
 | Can an operator audit a deployment without a wallet? | [`scripts/check-deployment-health.sh`](scripts/check-deployment-health.sh) combines wiring and PSM health checks |
 | Can I model CPI-driven reserve needs reproducibly? | [`docs/ECONOMIC-MODEL.md`](docs/ECONOMIC-MODEL.md) and `make economic-model` |
 | Can I reproduce an official CPI report payload? | [`scripts/parse-bls-cpi.mjs`](scripts/parse-bls-cpi.mjs) and [`docs/CPI-ADAPTER-SPEC.md`](docs/CPI-ADAPTER-SPEC.md) |
-| Can I verify a report before submitting it? | [`scripts/verify-cpi-report.mjs`](scripts/verify-cpi-report.mjs) checks live adapter/PSM watermarks and freshness, then recovers each EIP-712 signer without private keys |
+| Can I verify a report before submitting it? | [`scripts/verify-cpi-report.mjs`](scripts/verify-cpi-report.mjs) checks live adapter/PSM CPI state, watermarks, and freshness, then recovers each EIP-712 signer without private keys |
 | Does governance decode CPI adapter actions? | The dApp includes the generated `CPIReportAdapter` ABI for signer, threshold, ownership, and report actions |
 | Can the active CPI signer set be audited? | `CPIReportAdapter.getSigners()` and `check-psm-health.sh` expose the current addresses after each rotation |
 | Does the dApp show adapter custody state? | The dashboard and PSM page show the live adapter owner, source ID, quorum, signers, and last submitted report |
