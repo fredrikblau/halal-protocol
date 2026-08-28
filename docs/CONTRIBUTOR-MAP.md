@@ -42,6 +42,9 @@ criteria, and a safe local verification path:
   record safe Anvil-only wiring and health rehearsals.
 - [CPI source policy documentation (#80)](https://github.com/fredrikblau/halal-protocol/issues/80) —
   document how operators record source identity, cadence, custody, and fallback decisions.
+- [Accounting-aware transfer validation (#156)](https://github.com/fredrikblau/halal-protocol/issues/156) —
+  add offline tests for zero-recipient, zero-amount, and insufficient-credit rejection paths without
+  changing the accounting rule.
 - [First Arbitrum Sepolia reference deployment (#40)](https://github.com/fredrikblau/halal-protocol/issues/40) —
   coordinate a reviewed testnet deployment and publish reproducible address, source, health, and
   journal evidence; this requires maintainer coordination and is not a casual copy-paste task.
