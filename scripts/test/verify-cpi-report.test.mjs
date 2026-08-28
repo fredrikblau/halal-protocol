@@ -61,7 +61,7 @@ test("requires the adapter signer count to match its enumerated signer set", () 
 });
 
 test("requires cast signature verification to return true", () => {
-  assert.doesNotThrow(() => requirePositiveSignatureVerification("true\n", 0));
+  assert.doesNotThrow(() => requirePositiveSignatureVerification("Validation succeeded. Address 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC signed this message.\n", 0));
   assert.throws(() => requirePositiveSignatureVerification("false\n", 0), /signature 0 failed verification/);
   assert.throws(() => requirePositiveSignatureVerification("", 1), /signature 1 failed verification/);
 });

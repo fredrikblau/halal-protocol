@@ -120,7 +120,8 @@ export function validateAdapterSignerSet({ threshold, signerCount, onChainSigner
 }
 
 export function requirePositiveSignatureVerification(output, index) {
-  if (output.trim().toLowerCase() !== "true") {
+  const normalized = output.trim();
+  if (!/^Validation succeeded\. Address 0x[0-9a-fA-F]{40} signed this message\.$/.test(normalized)) {
     throw new Error(`signature ${index} failed verification`);
   }
 }
