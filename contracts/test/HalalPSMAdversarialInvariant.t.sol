@@ -7,6 +7,7 @@ import { HalalToken } from "../src/HalalToken.sol";
 import { MockFeeOnTransferERC20 } from "./mocks/MockFeeOnTransferERC20.sol";
 import { MockFalseReturnERC20 } from "./mocks/MockFalseReturnERC20.sol";
 import { MockNoReturnERC20 } from "./mocks/MockNoReturnERC20.sol";
+import { MockTransferLimitERC20 } from "./mocks/MockTransferLimitERC20.sol";
 import { Deployers } from "./utils/Deployers.sol";
 
 /// @notice Stateful actions for a reserve token that charges 1% on every user-to-user transfer.
@@ -226,6 +227,91 @@ contract NoReturnReserveHandler is Test {
     }
 }
 
+/// @notice Stateful actions for an anti-whale reserve token. Transfers above the token's cap are
+/// expected to revert; the handler catches those expected failures so invariant sequences can
+/// continue and prove that rejected deposits/withdrawals do not mutate PSM issuance or solvency.
+contract TransferLimitReserveHandler is Test {
+    uint256 public constant MAX_TRANSFER = 1e22;
+    uint256 internal constant MAX_AMOUNT = 1e24;
+
+    HalalPSM internal immutable psm;
+    HalalToken internal immutable token;
+    MockTransferLimitERC20 internal immutable reserve;
+    address internal immutable alice;
+    address internal immutable bob;
+
+    constructor(HalalPSM psm_, HalalToken token_, MockTransferLimitERC20 reserve_, address alice_, address bob_) {
+        psm = psm_;
+        token = token_;
+        reserve = reserve_;
+        alice = alice_;
+        bob = bob_;
+    }
+
+    function deposit(uint256 actorSeed, uint256 amountSeed) external {
+        address actor = _actor(actorSeed);
+        uint256 amount =
+            amountSeed % 2 == 0 ? bound(amountSeed, 1, MAX_TRANSFER) : bound(amountSeed, MAX_TRANSFER + 1, MAX_AMOUNT);
+        reserve.mint(actor, amount);
+
+        vm.startPrank(actor);
+        reserve.approve(address(psm), amount);
+        try psm.deposit(amount) { } catch { }
+        vm.stopPrank();
+    }
+
+    function withdraw(uint256 actorSeed, uint256 amountSeed) external {
+        address actor = _actor(actorSeed);
+        uint256 credit = psm.redeemableBalance(actor);
+        uint256 balance = token.balanceOf(actor);
+        uint256 maximum = credit < balance ? credit : balance;
+        if (maximum == 0) return;
+
+        uint256 amount = bound(amountSeed, 1, maximum);
+        vm.startPrank(actor);
+        token.approve(address(psm), amount);
+        try psm.withdraw(amount) { } catch { }
+        vm.stopPrank();
+    }
+
+    function transferRedeemable(uint256 actorSeed, uint256 amountSeed) external {
+        address from = _actor(actorSeed);
+        address to = from == alice ? bob : alice;
+        uint256 credit = psm.redeemableBalance(from);
+        uint256 balance = token.balanceOf(from);
+        uint256 maximum = credit < balance ? credit : balance;
+        if (maximum == 0) return;
+
+        uint256 amount = bound(amountSeed, 1, maximum);
+        vm.startPrank(from);
+        token.approve(address(psm), amount);
+        try psm.transferRedeemable(to, amount) { } catch { }
+        vm.stopPrank();
+    }
+
+    function cancelRedeemable(uint256 actorSeed, uint256 amountSeed) external {
+        address actor = _actor(actorSeed);
+        uint256 credit = psm.redeemableBalance(actor);
+        uint256 balance = token.balanceOf(actor);
+        uint256 maximum = credit < balance ? credit : balance;
+        if (maximum == 0) return;
+
+        uint256 amount = bound(amountSeed, 1, maximum);
+        vm.startPrank(actor);
+        token.approve(address(psm), amount);
+        try psm.cancelRedeemable(amount) { } catch { }
+        vm.stopPrank();
+    }
+
+    function knownRedeemableCredit() external view returns (uint256) {
+        return psm.redeemableBalance(alice) + psm.redeemableBalance(bob);
+    }
+
+    function _actor(uint256 seed) private view returns (address) {
+        return seed % 2 == 0 ? alice : bob;
+    }
+}
+
 contract HalalPSMAdversarialInvariantTest is Deployers {
     address internal feeAlice = makeAddr("feeInvariantAlice");
     address internal feeBob = makeAddr("feeInvariantBob");
@@ -330,5 +416,40 @@ contract HalalPSMNoReturnReserveInvariantTest is Deployers {
         vm.stopPrank();
         vm.prank(address(0xBEEF));
         target.updateCPI(1_000_000);
+    }
+}
+
+contract HalalPSMTransferLimitReserveInvariantTest is Deployers {
+    address internal limitedAlice = makeAddr("transferLimitInvariantAlice");
+    address internal limitedBob = makeAddr("transferLimitInvariantBob");
+    MockTransferLimitERC20 internal limitedReserve;
+    HalalPSM internal limitedPsm;
+    TransferLimitReserveHandler internal limitedHandler;
+
+    function setUp() public {
+        deployAll();
+        limitedReserve = new MockTransferLimitERC20(1e22);
+        limitedPsm = new HalalPSM(address(limitedReserve), address(token), address(timelock), address(0xBEEF));
+        vm.startPrank(address(timelock));
+        token.grantRole(token.MINTER_ROLE(), address(limitedPsm));
+        token.grantRole(token.BURNER_ROLE(), address(limitedPsm));
+        vm.stopPrank();
+        vm.prank(address(0xBEEF));
+        limitedPsm.updateCPI(1_000_000);
+
+        limitedHandler = new TransferLimitReserveHandler(limitedPsm, token, limitedReserve, limitedAlice, limitedBob);
+        targetContract(address(limitedHandler));
+    }
+
+    function invariant_TransferLimitCreditConservation() public view {
+        assertEq(limitedHandler.knownRedeemableCredit(), limitedPsm.totalHlcIssued());
+    }
+
+    function invariant_TransferLimitReserveRemainsCollateralized() public view {
+        assertGe(limitedReserve.balanceOf(address(limitedPsm)), limitedPsm.reserveRequired());
+    }
+
+    function invariant_TransferLimitSupplyDecomposition() public view {
+        assertEq(token.totalSupply(), 10_000_000e18 + limitedPsm.totalHlcIssued());
     }
 }
