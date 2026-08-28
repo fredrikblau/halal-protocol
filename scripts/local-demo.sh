@@ -4,7 +4,9 @@ set -euo pipefail
 # This wrapper is intentionally local-only. The default mnemonic is a published Anvil demo
 # mnemonic and must never be used with a public RPC. Set ANVIL_MNEMONIC to use another local seed.
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-LOCAL_RPC_URL="http://127.0.0.1:8545"
+ANVIL_PORT="${ANVIL_PORT:-8545}"
+APP_PORT="${APP_PORT:-3000}"
+LOCAL_RPC_URL="http://127.0.0.1:${ANVIL_PORT}"
 LOCAL_MNEMONIC="${ANVIL_MNEMONIC:-test test test test test test test test test test test junk}"
 DEPLOY_LOG="$(mktemp)"
 ANVIL_PID=""
@@ -36,7 +38,7 @@ if cast chain-id --rpc-url "$LOCAL_RPC_URL" >/dev/null 2>&1; then
 fi
 
 echo "Starting disposable Anvil chain..."
-anvil --silent --mnemonic "$LOCAL_MNEMONIC" --port 8545 >/tmp/halal-anvil.log 2>&1 &
+anvil --silent --mnemonic "$LOCAL_MNEMONIC" --port "$ANVIL_PORT" >/tmp/halal-anvil.log 2>&1 &
 ANVIL_PID=$!
 until cast chain-id --rpc-url "$LOCAL_RPC_URL" >/dev/null 2>&1; do sleep 1; done
 LOCAL_PRIVATE_KEY="$(cast wallet derive --insecure "$LOCAL_MNEMONIC" | awk '/Private key:/ { print $3; exit }')"
@@ -109,10 +111,10 @@ LOCAL_DEPLOYMENT_BLOCK="$(cast block latest --field number --rpc-url "$LOCAL_RPC
 } > "$APP_ENV_FILE"
 
 echo "Temporary frontend configuration written to app/.env.local (restored on exit)"
-echo "Starting the dApp at http://localhost:3000 (Ctrl-C to stop both processes)..."
+echo "Starting the dApp at http://localhost:${APP_PORT} (Ctrl-C to stop both processes)..."
 (
   cd "$ROOT_DIR/app"
-  pnpm dev
+  pnpm dev --hostname 127.0.0.1 --port "$APP_PORT"
 ) &
 APP_PID=$!
 wait "$APP_PID"
