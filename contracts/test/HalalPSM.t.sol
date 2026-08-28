@@ -646,6 +646,17 @@ contract HalalPSMTest is Deployers {
 
         assertEq(zeroPayoutPsm.totalHlcIssued(), 1e18);
         assertEq(zeroPayoutPsm.redeemableBalance(alice), 1e18);
+
+        MockFeeOnTransferERC20 zeroAdminPayoutReserve = new MockFeeOnTransferERC20(10_000);
+        HalalPSM zeroAdminPayoutPsm =
+            new HalalPSM(address(zeroAdminPayoutReserve), address(token), address(timelock), address(0));
+        zeroAdminPayoutReserve.mint(address(zeroAdminPayoutPsm), 1e18);
+
+        vm.prank(address(timelock));
+        vm.expectRevert(HalalPSM.ZeroReceived.selector);
+        zeroAdminPayoutPsm.withdrawReserve(address(this), 1e18);
+
+        assertEq(zeroAdminPayoutReserve.balanceOf(address(zeroAdminPayoutPsm)), 1e18);
     }
 
     function test_SupportsReserveTokenWithNoTransferReturnData() public {
