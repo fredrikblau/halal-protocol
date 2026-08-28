@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseFoundrySummary, validateCurrentDocumentation } from "../check-test-counts.mjs";
+import { parseFoundryJson, parseFoundrySummary, validateCurrentDocumentation } from "../check-test-counts.mjs";
 
 const SUMMARY = `
 Ran 27 tests for test/CPIReportAdapter.t.sol:CPIReportAdapterTest
@@ -27,6 +27,27 @@ test("parses total and invariant counts from a Foundry summary", () => {
       { name: "HalalPSMFalseReserveInvariantTest", passed: 1, failed: 0, skipped: 0 },
     ],
   });
+});
+
+test("counts individual invariant results from Foundry JSON", () => {
+  const summary = parseFoundryJson(JSON.stringify({
+    "test/HalalPSM.t.sol:HalalPSMTest": {
+      test_results: {
+        test_deposit: { status: "Success" },
+      },
+    },
+    "test/HalalPSMInvariant.t.sol:HalalPSMInvariantTest": {
+      test_results: {
+        invariant_supply: { status: "Success" },
+        invariant_credit: { status: "Success" },
+      },
+    },
+  }));
+  assert.equal(summary.total, 3);
+  assert.equal(summary.unit, 1);
+  assert.equal(summary.invariants, 2);
+  assert.equal(summary.failed, 0);
+  assert.equal(summary.skipped, 0);
 });
 
 test("accepts synchronized documentation counts", () => {

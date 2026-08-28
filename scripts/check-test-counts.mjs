@@ -69,12 +69,39 @@ export function validateCurrentDocumentation(summary, documents = CURRENT_DOCUME
   return errors;
 }
 
+export function parseFoundryJson(output) {
+  const suites = [];
+  const results = JSON.parse(output);
+  for (const [suiteName, suite] of Object.entries(results)) {
+    for (const [testName, test] of Object.entries(suite.test_results ?? {})) {
+      const status = test.status;
+      suites.push({
+        name: suiteName,
+        testName,
+        passed: status === "Success" ? 1 : 0,
+        failed: status === "Failure" ? 1 : 0,
+        skipped: status === "Skipped" ? 1 : 0,
+      });
+    }
+  }
+  if (suites.length === 0) throw new Error("could not find Foundry JSON test results");
+  const invariants = suites.filter((test) => test.testName.startsWith("invariant_")).length;
+  const unit = suites.length - invariants;
+  const failed = suites.reduce((sum, test) => sum + test.failed, 0);
+  const skipped = suites.reduce((sum, test) => sum + test.skipped, 0);
+  return { total: unit + invariants, unit, invariants, failed, skipped, suites };
+}
+
 export function run() {
-  const result = spawnSync("forge", ["test", "--summary"], { cwd: CONTRACTS, encoding: "utf8" });
-  const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`;
+  const result = spawnSync("forge", ["test", "--json"], {
+    cwd: CONTRACTS,
+    encoding: "utf8",
+    maxBuffer: 16 * 1024 * 1024,
+  });
+  const output = result.stdout ?? "";
   if (result.error) throw new Error(`could not run forge: ${result.error.message}`);
   if (result.status !== 0) throw new Error(`forge test failed with exit code ${result.status}`);
-  const summary = parseFoundrySummary(output);
+  const summary = parseFoundryJson(output);
   if (summary.failed !== 0 || summary.skipped !== 0) {
     throw new Error(`Foundry summary contains ${summary.failed} failed and ${summary.skipped} skipped tests`);
   }
