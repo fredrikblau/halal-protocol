@@ -278,7 +278,7 @@ test("renders deployment health without a wallet provider", async ({ page }) => 
   await expect(page.getByText("CPI report freshness")).toBeVisible();
   await expect(page.getByText("PSM reserve coverage")).toBeVisible();
   await expect(page.getByText("Signed CPI adapter")).toBeVisible();
-  await expect(page.getByText(/2 of 2 configured signers; adapter and PSM watermarks match/)).toBeVisible();
+  await expect(page.getByText(/2 of 2 configured signers; adapter and PSM CPI state matches/)).toBeVisible();
   const healthChecks = page.getByRole("list", { name: "Deployment health checks" });
   await expect(healthChecks.getByRole("listitem", { name: "Contract wiring and roles Healthy" })).toContainText("Addresses, roles, and timelock wiring match the configured deployment.");
   const cpiHealthCheck = healthChecks.getByRole("listitem", { name: /CPI report freshness (Healthy|Review|Blocking|Checking)/ });
@@ -1094,5 +1094,5 @@ test("blocks health when the adapter and PSM report watermarks diverge", async (
 
   await expect(page.getByRole("status", { name: "Overall deployment health" })).toContainText("Blocking");
   await expect(page.getByText("Signed CPI adapter")).toBeVisible();
-  await expect(page.getByText("Adapter quorum, ownership, source identity, or report watermark diverges from the deployment.")).toBeVisible();
+  await expect(page.getByText("Adapter quorum, ownership, source identity, CPI rate, or report watermark diverges from the deployment.")).toBeVisible();
 });

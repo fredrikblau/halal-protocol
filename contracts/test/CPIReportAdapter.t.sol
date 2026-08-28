@@ -65,6 +65,7 @@ contract CPIReportAdapterTest is Test {
         signers[2] = signerThree;
         sink = new MockCPIReportSink();
         adapter = new CPIReportAdapter(address(sink), address(this), signers, 2, SOURCE_ID);
+        assertEq(adapter.lastSubmittedCPI(), sink.cpiRate());
     }
 
     function test_SubmitsQuorumReportToSink() public {

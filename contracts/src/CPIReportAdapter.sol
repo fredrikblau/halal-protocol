@@ -69,6 +69,10 @@ contract CPIReportAdapter is EIP712, Ownable2Step, ReentrancyGuard {
         if (signers_.length == 0 || threshold_ == 0 || threshold_ > signers_.length) revert InvalidSignerSet();
         if (signers_.length > MAX_SIGNERS) revert SignerSetTooLarge();
         psm = ICPIReportSink(psm_);
+        // The adapter may be attached after the PSM has already received its initial CPI value.
+        // Baseline the persisted value to that live state so a fresh adapter is not reported as
+        // divergent before its first signed submission.
+        lastSubmittedCPI = psm.cpiRate();
         sourceId = sourceId_;
         threshold = threshold_;
         emit SourceIdConfigured(sourceId_);
