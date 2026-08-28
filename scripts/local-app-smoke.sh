@@ -89,6 +89,15 @@ cast send "$PSM_ADDRESS" 'setSource(string)' "$CPI_SOURCE" --from "$TIMELOCK_ADD
 
 ADAPTER_ADDRESS="$(awk '/CPI report adapter:/ { print $NF; exit }' "$DEPLOY_LOG")"
 test -n "$ADAPTER_ADDRESS"
+
+# The local app is configured to inspect the optional adapter, so the disposable deployment must
+# model the production handoff: the adapter, rather than the bootstrap updater account, owns the
+# PSM updater role. Use the local timelock impersonation already established above; this keeps the
+# fixture faithful to governance-controlled role wiring without changing the production deploy script.
+PSM_UPDATER_ROLE="$(cast call "$PSM_ADDRESS" 'UPDATER_ROLE()(bytes32)' --rpc-url "$LOCAL_RPC_URL")"
+cast send "$PSM_ADDRESS" 'grantRole(bytes32,address)' "$PSM_UPDATER_ROLE" "$ADAPTER_ADDRESS" \
+  --from "$TIMELOCK_ADDRESS" --unlocked --rpc-url "$LOCAL_RPC_URL" >/dev/null
+
 if [[ -e "$APP_ENV_FILE" ]]; then
   APP_ENV_BACKUP="$(mktemp)"
   cp -p "$APP_ENV_FILE" "$APP_ENV_BACKUP"
