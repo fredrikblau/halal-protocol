@@ -41,9 +41,6 @@ criteria, and a safe local verification path:
   record safe Anvil-only wiring and health rehearsals.
 - [CPI source policy documentation (#80)](https://github.com/fredrikblau/halal-protocol/issues/80) —
   document how operators record source identity, cadence, custody, and fallback decisions.
-- [CPI adapter deployment configuration coverage (#150)](https://github.com/fredrikblau/halal-protocol/issues/150) —
-  add offline tests for the complete chain, custody, signer, threshold, and source-ID validation gate;
-  no RPC, private key, or broadcast is needed.
 - [First Arbitrum Sepolia reference deployment (#40)](https://github.com/fredrikblau/halal-protocol/issues/40) —
   coordinate a reviewed testnet deployment and publish reproducible address, source, health, and
   journal evidence; this requires maintainer coordination and is not a casual copy-paste task.
