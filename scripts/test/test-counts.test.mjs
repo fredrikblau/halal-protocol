@@ -3,25 +3,28 @@ import assert from "node:assert/strict";
 import { parseFoundrySummary, validateCurrentDocumentation } from "../check-test-counts.mjs";
 
 const SUMMARY = `
-| Test Suite                           | Passed | Failed | Skipped |
-| CPIReportAdapterTest                 | 27     | 0      | 0        |
-| HalalPSMTest                         | 73     | 0      | 0        |
-| HalalPSMInvariantTest                | 3      | 0      | 0        |
-| HalalPSMFalseReserveInvariantTest    | 2      | 0      | 0        |
+Ran 27 tests for test/CPIReportAdapter.t.sol:CPIReportAdapterTest
+Ran 73 tests for test/HalalPSM.t.sol:HalalPSMTest
+Ran 1 test for test/HalalPSMAdversarialInvariant.t.sol:HalalPSMInvariantTest
+  [PASS] invariant_Accounting
+  [PASS] invariant_Collateral
+Ran 1 test for test/HalalPSMAdversarialInvariant.t.sol:HalalPSMFalseReserveInvariantTest
+  [PASS] invariant_FalseReserve
+Ran 105 tests in 1 suite: 100 tests passed, 0 failed, 0 skipped
 `;
 
 test("parses total and invariant counts from a Foundry summary", () => {
   assert.deepEqual(parseFoundrySummary(SUMMARY), {
-    total: 105,
+    total: 103,
     unit: 100,
-    invariants: 5,
+    invariants: 3,
     failed: 0,
     skipped: 0,
     suites: [
       { name: "CPIReportAdapterTest", passed: 27, failed: 0, skipped: 0 },
       { name: "HalalPSMTest", passed: 73, failed: 0, skipped: 0 },
-      { name: "HalalPSMInvariantTest", passed: 3, failed: 0, skipped: 0 },
-      { name: "HalalPSMFalseReserveInvariantTest", passed: 2, failed: 0, skipped: 0 },
+      { name: "HalalPSMInvariantTest", passed: 1, failed: 0, skipped: 0 },
+      { name: "HalalPSMFalseReserveInvariantTest", passed: 1, failed: 0, skipped: 0 },
     ],
   });
 });

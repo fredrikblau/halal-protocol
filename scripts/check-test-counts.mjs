@@ -18,20 +18,40 @@ const CURRENT_DOCUMENTS = [
 
 export function parseFoundrySummary(output) {
   const suites = [];
-  const rowPattern = /^\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*$/gm;
-  for (const match of output.matchAll(rowPattern)) {
-    const [, name, passed, failed, skipped] = match;
-    if (/^Test Suite$/i.test(name.trim())) continue;
-    suites.push({ name: name.trim(), passed: Number(passed), failed: Number(failed), skipped: Number(skipped) });
+  const runPattern = /^Ran\s+(\d+)\s+tests?\s+for\s+[^:]+:([^\s]+)\s*$/gm;
+  for (const match of output.matchAll(runPattern)) {
+    suites.push({ name: match[2], passed: Number(match[1]), failed: 0, skipped: 0 });
   }
-  if (suites.length === 0) throw new Error("could not find a Foundry summary table");
-  const failed = suites.reduce((sum, suite) => sum + suite.failed, 0);
-  const skipped = suites.reduce((sum, suite) => sum + suite.skipped, 0);
-  const total = suites.reduce((sum, suite) => sum + suite.passed, 0);
+  const finalResult = output.match(/Ran\s+\d+\s+(?:test suites?|tests?)\s+in[^\n]*:\s*(\d+)\s+tests?\s+passed,\s*(\d+)\s+failed,\s*(\d+)\s+skipped/);
+  if (suites.length > 0 && finalResult) {
+    // Foundry 1.8 reports an invariant contract as one test, while older releases report each
+    // invariant function. Count the individual invariant assertions from their stable names so the
+    // documented count remains comparable across supported Foundry versions.
+    const invariants = (output.match(/^\s*\[PASS\]\s+invariant_[A-Za-z0-9_]+\s*$/gm) ?? []).length;
+    const unit = suites
+      .filter((suite) => !/InvariantTest$/.test(suite.name))
+      .reduce((sum, suite) => sum + suite.passed, 0);
+    return { total: unit + invariants, unit, invariants, failed: Number(finalResult[2]), skipped: Number(finalResult[3]), suites };
+  }
+
+  // Foundry 1.7's summary mode emits a table instead of per-suite result lines. Keep this fallback
+  // for the local version documented by the project and normalize its invariant rows the same way.
+  suites.length = 0;
+  const tablePattern = /^\|\s*([^|]+?)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*$/gm;
+  for (const match of output.matchAll(tablePattern)) {
+    const [, name, passed, failed, skipped] = match;
+    if (!/^Test Suite$/i.test(name.trim())) suites.push({ name: name.trim(), passed: Number(passed), failed: Number(failed), skipped: Number(skipped) });
+  }
+  if (suites.length === 0) throw new Error("could not find Foundry test-suite results");
   const invariants = suites
     .filter((suite) => /InvariantTest$/.test(suite.name))
     .reduce((sum, suite) => sum + suite.passed, 0);
-  return { total, unit: total - invariants, invariants, failed, skipped, suites };
+  const unit = suites
+    .filter((suite) => !/InvariantTest$/.test(suite.name))
+    .reduce((sum, suite) => sum + suite.passed, 0);
+  const failed = suites.reduce((sum, suite) => sum + suite.failed, 0);
+  const skipped = suites.reduce((sum, suite) => sum + suite.skipped, 0);
+  return { total: unit + invariants, unit, invariants, failed, skipped, suites };
 }
 
 export function validateCurrentDocumentation(summary, documents = CURRENT_DOCUMENTS, root = ROOT, readText = (file) => readFileSync(file, "utf8")) {
