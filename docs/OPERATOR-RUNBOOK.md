@@ -338,15 +338,19 @@ printf '%s\n' "$health_output" | awk -F= '
   $1 == "status" { status = $2 }
   $1 == "reason" { reason = $2 }
   $1 == "reserve_surplus" { reserve = $2 }
+  $1 == "cpi_rate" { cpi = $2 }
   $1 == "last_report_timestamp" { report = $2 }
   $1 == "cpi_adapter_last_submitted_timestamp" { adapter = $2 }
+  $1 == "cpi_adapter_last_submitted_cpi" { adapter_cpi = $2 }
   END {
     healthy = (status == "healthy" ? 1 : 0)
     watermark_match = (adapter != "" && adapter == report ? 1 : 0)
+    rate_match = (adapter_cpi != "" && adapter_cpi == cpi ? 1 : 0)
     printf "halal_psm_health %d\n", healthy
     if (reserve != "") printf "halal_psm_reserve_surplus %s\n", reserve
     if (report != "") printf "halal_psm_last_report_timestamp %s\n", report
     if (adapter != "") printf "halal_cpi_adapter_watermark_match %d\n", watermark_match
+    if (adapter_cpi != "") printf "halal_cpi_adapter_rate_match %d\n", rate_match
     if (reason != "") printf "halal_psm_health_reason{reason=\"%s\"} 1\n", reason
   }
 '
@@ -355,8 +359,8 @@ exit "$health_exit"
 ```
 
 Alert when `halal_psm_health == 0`, `halal_psm_reserve_surplus < 0`, or
-`halal_cpi_adapter_watermark_match == 0` when an adapter is configured. The last condition is the
-machine-readable form of `reason=cpi_adapter_watermark_mismatch`; it detects an unintended updater,
+`halal_cpi_adapter_watermark_match == 0` or `halal_cpi_adapter_rate_match == 0` when an adapter is configured. The last conditions are the
+machine-readable forms of `reason=cpi_adapter_watermark_mismatch` and `reason=cpi_adapter_rate_mismatch`; they detect an unintended updater,
 an incomplete handoff, or an inconsistent deployment state.
 
 ## 3. CPI updater operations
