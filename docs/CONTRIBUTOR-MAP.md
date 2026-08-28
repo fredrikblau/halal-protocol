@@ -39,24 +39,8 @@ criteria, and a safe local verification path:
   demonstrates how to separate observations, assumptions, residual risks, and decisions.
 - The completed [local deployment evidence example](LOCAL-DEPLOYMENT-EVIDENCE.md) shows how to
   record safe Anvil-only wiring and health rehearsals.
-- [Deployment manifest source-label round trip (#100)](https://github.com/fredrikblau/halal-protocol/issues/100) —
-  add an offline recorder-to-registry regression test; no RPC, wallet, signing, or deployment is needed.
-- [CPI source-label reviewer checklist](CPI-ADAPTER-SPEC.md#reviewer-checklist-before-a-governed-handoff) —
-  review the PSM label, adapter source ID, policy record, and deployment evidence before a governed handoff;
-  the implementation is complete, so use the open issue list for current contributor tasks.
 - [CPI source policy documentation (#80)](https://github.com/fredrikblau/halal-protocol/issues/80) —
   document how operators record source identity, cadence, custody, and fallback decisions.
-- [dApp accessibility smoke coverage (#102)](https://github.com/fredrikblau/halal-protocol/issues/102) —
-  add role- and state-focused browser checks for health, network, and fail-closed transaction states.
-- [Protocol glossary (#117)](https://github.com/fredrikblau/halal-protocol/issues/117) —
-  define the project's core terms and link each definition to the current source of truth.
-- [Clean-clone environment verification (#118)](https://github.com/fredrikblau/halal-protocol/issues/118) —
-  run the contributor quickstart on another environment and document reproducible setup friction.
-- [Adversarial reserve-token invariant coverage (#125)](https://github.com/fredrikblau/halal-protocol/issues/125) —
-  add a deterministic reserve-token model and focused invariant coverage without touching deployment code.
-- [Independent protocol reviewer (#126)](https://github.com/fredrikblau/halal-protocol/issues/126) —
-  review an open protocol or tooling PR with reproducible, no-credentials evidence and help establish a
-  trusted reviewer rotation.
 - [CPI adapter deployment configuration coverage (#150)](https://github.com/fredrikblau/halal-protocol/issues/150) —
   add offline tests for the complete chain, custody, signer, threshold, and source-ID validation gate;
   no RPC, private key, or broadcast is needed.

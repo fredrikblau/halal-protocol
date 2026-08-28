@@ -43,16 +43,9 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
   port, or stale local configuration blocks the demo.
 - Run `make verify` before opening a pull request.
 - Pick a bounded task from the [open good-first-issue list](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22),
-  such as [deployment-manifest source-label testing](https://github.com/fredrikblau/halal-protocol/issues/100),
-  [CPI source policy documentation](https://github.com/fredrikblau/halal-protocol/issues/80), or
-  [accessibility smoke coverage](https://github.com/fredrikblau/halal-protocol/issues/102).
-- If you prefer documentation, see the [protocol glossary task](https://github.com/fredrikblau/halal-protocol/issues/117).
-- If you prefer reproducibility testing, see the [clean-clone environment task](https://github.com/fredrikblau/halal-protocol/issues/118).
-- If you prefer Foundry testing, see the [adversarial reserve-token invariant task](https://github.com/fredrikblau/halal-protocol/issues/125).
-- If you prefer deployment safety, see the [CPI adapter configuration coverage task](https://github.com/fredrikblau/halal-protocol/issues/150); it needs no RPC, private key, or broadcast.
+  such as [CPI source policy documentation](https://github.com/fredrikblau/halal-protocol/issues/80) or
+  [CPI adapter configuration coverage](https://github.com/fredrikblau/halal-protocol/issues/150).
 - If you can review protocol or tooling changes, see the [independent reviewer path](https://github.com/fredrikblau/halal-protocol/issues/126).
-- Improve the dApp's inclusive, fail-closed states with the
-  [accessibility smoke-coverage issue](https://github.com/fredrikblau/halal-protocol/issues/102).
 - Help coordinate the first carefully gated [Arbitrum Sepolia deployment](https://github.com/fredrikblau/halal-protocol/issues/40).
 - Review the bounded [security challenge](https://github.com/fredrikblau/halal-protocol/issues/16) or
   [production CPI adapter design](https://github.com/fredrikblau/halal-protocol/issues/17).
