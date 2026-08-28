@@ -26,7 +26,7 @@ test("parses total and invariant counts from a Foundry summary", () => {
   });
 });
 
-test("reports stale documentation counts", () => {
+test("accepts synchronized documentation counts", () => {
   const errors = validateCurrentDocumentation(
     { total: 199, unit: 188, invariants: 11 },
     ["README.md"],
@@ -34,4 +34,17 @@ test("reports stale documentation counts", () => {
     () => "199 total, 188 unit, 11 invariants",
   );
   assert.deepEqual(errors, []);
+});
+
+test("reports stale unit and invariant counts", () => {
+  const errors = validateCurrentDocumentation(
+    { total: 196, unit: 185, invariants: 11 },
+    ["README.md"],
+    "/virtual",
+    () => "196 total, 183 unit, 13 invariants",
+  );
+  assert.deepEqual(errors, [
+    "README.md does not mention current count 185",
+    "README.md does not mention current count 11",
+  ]);
 });
