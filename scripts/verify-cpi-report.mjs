@@ -119,6 +119,12 @@ export function validateAdapterSignerSet({ threshold, signerCount, onChainSigner
   return normalized;
 }
 
+export function requirePositiveSignatureVerification(output, index) {
+  if (output.trim().toLowerCase() !== "true") {
+    throw new Error(`signature ${index} failed verification`);
+  }
+}
+
 /**
  * Checks the report against the live timestamp state that the adapter and PSM will enforce.
  * Keeping this pure makes the safety boundary testable without a wallet or an RPC process.
@@ -209,7 +215,7 @@ export function verifyReport({ typedDataPath, rpcUrl, adapter, signerValues, sig
       ["wallet", "verify", "--data", "--from-file", typedDataPath, "--address", signers[index], signatures[index]],
       castCommand,
     );
-    if (!result) throw new Error(`signature ${index} returned no verification result`);
+    requirePositiveSignatureVerification(result, index);
   }
   return {
     status: "verified",
