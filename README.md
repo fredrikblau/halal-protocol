@@ -46,6 +46,8 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
   such as [CPI source policy documentation](https://github.com/fredrikblau/halal-protocol/issues/80).
 - The [clean-clone verification task](https://github.com/fredrikblau/halal-protocol/issues/118) is a
   documentation-only second-environment check with no wallet, RPC credentials, deployment, or real-funds scope.
+- The [ShellCheck CI task](https://github.com/fredrikblau/halal-protocol/issues/161) is a bounded
+  tooling contribution for linting operational scripts without changing protocol or deployment behavior.
 - The [rebasing reserve-token model](https://github.com/fredrikblau/halal-protocol/issues/159) is
   currently claimed in [PR #160](https://github.com/fredrikblau/halal-protocol/pull/160); review and
   alternative edge cases remain welcome.

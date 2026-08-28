@@ -45,6 +45,9 @@ criteria, and a safe local verification path:
 - [Clean-clone quickstart verification (#118)](https://github.com/fredrikblau/halal-protocol/issues/118) —
   run the contributor quickstart on a second environment and record reproducible setup evidence without
   wallets, RPC credentials, deployment, or real funds.
+- [Pinned ShellCheck CI coverage (#161)](https://github.com/fredrikblau/halal-protocol/issues/161) —
+  lint first-party operational scripts for quoting and portability hazards with an explicit tool version
+  and narrowly justified exclusions.
 - [Rebasing reserve-token model (#159)](https://github.com/fredrikblau/halal-protocol/issues/159) —
   currently claimed in [PR #160](https://github.com/fredrikblau/halal-protocol/pull/160); review and
   alternative edge cases remain welcome.
