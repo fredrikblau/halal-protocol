@@ -160,6 +160,14 @@ fi
 
 if [[ -n "${CPI_ADAPTER:-}" ]]; then
   CPI_ADAPTER="${CPI_ADAPTER,,}"
+  updater_role="$(call 'UPDATER_ROLE()(bytes32)')"
+  adapter_updater_configured="$(address_call 'hasRole(bytes32,address)(bool)' "$updater_role" "$CPI_ADAPTER")"
+  echo "cpi_adapter_updater_role=$adapter_updater_configured"
+  if [[ "$adapter_updater_configured" != "true" ]]; then
+    echo "status=unhealthy"
+    echo "reason=cpi_adapter_missing_updater_role"
+    failure=1
+  fi
   adapter_psm="$(call_at "$CPI_ADAPTER" 'psm()(address)' | tr '[:upper:]' '[:lower:]')"
   adapter_owner="$(call_at "$CPI_ADAPTER" 'owner()(address)' | tr '[:upper:]' '[:lower:]')"
   adapter_source_id="$(call_at "$CPI_ADAPTER" 'sourceId()(bytes32)' | tr '[:upper:]' '[:lower:]')"
