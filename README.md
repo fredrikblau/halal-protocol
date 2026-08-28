@@ -42,6 +42,8 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
   [accessibility smoke coverage](https://github.com/fredrikblau/halal-protocol/issues/102).
 - If you prefer documentation, see the [protocol glossary task](https://github.com/fredrikblau/halal-protocol/issues/117).
 - If you prefer reproducibility testing, see the [clean-clone environment task](https://github.com/fredrikblau/halal-protocol/issues/118).
+- If you prefer Foundry testing, see the [adversarial reserve-token invariant task](https://github.com/fredrikblau/halal-protocol/issues/125).
+- If you can review protocol or tooling changes, see the [independent reviewer path](https://github.com/fredrikblau/halal-protocol/issues/126).
 - Improve the dApp's inclusive, fail-closed states with the
   [accessibility smoke-coverage issue](https://github.com/fredrikblau/halal-protocol/issues/102).
 - Help coordinate the first carefully gated [Arbitrum Sepolia deployment](https://github.com/fredrikblau/halal-protocol/issues/40).

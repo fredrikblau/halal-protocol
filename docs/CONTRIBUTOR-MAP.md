@@ -52,6 +52,11 @@ criteria, and a safe local verification path:
   define the project's core terms and link each definition to the current source of truth.
 - [Clean-clone environment verification (#118)](https://github.com/fredrikblau/halal-protocol/issues/118) —
   run the contributor quickstart on another environment and document reproducible setup friction.
+- [Adversarial reserve-token invariant coverage (#125)](https://github.com/fredrikblau/halal-protocol/issues/125) —
+  add a deterministic reserve-token model and focused invariant coverage without touching deployment code.
+- [Independent protocol reviewer (#126)](https://github.com/fredrikblau/halal-protocol/issues/126) —
+  review an open protocol or tooling PR with reproducible, no-credentials evidence and help establish a
+  trusted reviewer rotation.
 - [First Arbitrum Sepolia reference deployment (#40)](https://github.com/fredrikblau/halal-protocol/issues/40) —
   coordinate a reviewed testnet deployment and publish reproducible address, source, health, and
   journal evidence; this requires maintainer coordination and is not a casual copy-paste task.
