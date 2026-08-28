@@ -469,4 +469,30 @@ contract HalalPSMRebasingReserveTest is Deployers {
         assertEq(token.balanceOf(rebasingAlice), 900e18);
         assertEq(rebasingPsm.redeemableBalance(rebasingAlice), 900e18);
     }
+
+    function test_RebasingLossAllowsWithdrawalWithoutWorseningExistingDeficit() public {
+        rebasingReserve.mint(rebasingAlice, 1_000e18);
+        vm.startPrank(rebasingAlice);
+        rebasingReserve.approve(address(rebasingPsm), 1_000e18);
+        rebasingPsm.deposit(1_000e18);
+        vm.stopPrank();
+
+        vm.prank(address(timelock));
+        rebasingPsm.mockCPI(1_100_000);
+        rebasingReserve.rebase(address(rebasingPsm), -int256(50e18));
+        assertEq(rebasingPsm.reserveRequired(), 1_100e18);
+        assertEq(rebasingPsm.reserveSurplus(), -int256(150e18));
+
+        vm.startPrank(rebasingAlice);
+        token.approve(address(rebasingPsm), 100e18);
+        rebasingPsm.withdraw(100e18);
+        vm.stopPrank();
+
+        assertEq(rebasingReserve.balanceOf(address(rebasingPsm)), 840e18);
+        assertEq(rebasingPsm.reserveRequired(), 990e18);
+        assertEq(rebasingPsm.reserveSurplus(), -int256(150e18));
+        assertEq(rebasingPsm.totalHlcIssued(), 900e18);
+        assertEq(rebasingPsm.redeemableBalance(rebasingAlice), 900e18);
+        assertEq(token.balanceOf(rebasingAlice), 900e18);
+    }
 }
