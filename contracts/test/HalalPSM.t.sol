@@ -1017,6 +1017,20 @@ contract HalalPSMTest is Deployers {
         psm.withdraw(400e18);
         vm.stopPrank();
         assertEq(psm.redeemableBalance(bob), 0);
+
+        vm.startPrank(alice);
+        vm.expectRevert(HalalPSM.ZeroAddress.selector);
+        psm.transferRedeemable(address(0), 1);
+        vm.expectRevert(HalalPSM.ZeroAmount.selector);
+        psm.transferRedeemable(bob, 0);
+        vm.expectRevert(HalalPSM.InsufficientRedeemableBalance.selector);
+        psm.transferRedeemable(bob, 601e18);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(alice), 600e18);
+        assertEq(token.balanceOf(bob), 0);
+        assertEq(psm.redeemableBalance(alice), 600e18);
+        assertEq(psm.redeemableBalance(bob), 0);
     }
 
     function test_TransferredCreditCannotUnlockRecipientGenesisBalance() public {
