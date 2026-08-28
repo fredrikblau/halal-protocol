@@ -43,8 +43,9 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
   port, or stale local configuration blocks the demo.
 - Run `make verify` before opening a pull request.
 - Pick a bounded task from the [open good-first-issue list](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22),
-  such as [CPI source policy documentation](https://github.com/fredrikblau/halal-protocol/issues/80) or
-  [accounting-aware transfer validation](https://github.com/fredrikblau/halal-protocol/issues/156).
+  such as [CPI source policy documentation](https://github.com/fredrikblau/halal-protocol/issues/80).
+- The accounting-aware transfer validation task is currently claimed in
+  [PR #157](https://github.com/fredrikblau/halal-protocol/pull/157) and remains open for review.
 - The CPI adapter configuration coverage task is currently claimed in
   [PR #153](https://github.com/fredrikblau/halal-protocol/pull/153) and remains open for independent review.
 - If you can review protocol or tooling changes, see the [independent reviewer path](https://github.com/fredrikblau/halal-protocol/issues/126).
