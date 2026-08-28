@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseFoundryJson, parseFoundrySummary, validateCurrentDocumentation } from "../check-test-counts.mjs";
+import { countInvariantFunctions, parseFoundryJson, parseFoundrySummary, validateCurrentDocumentation } from "../check-test-counts.mjs";
 
 const SUMMARY = `
 Ran 27 tests for test/CPIReportAdapter.t.sol:CPIReportAdapterTest
@@ -48,6 +48,13 @@ test("counts individual invariant results from Foundry JSON", () => {
   assert.equal(summary.invariants, 2);
   assert.equal(summary.failed, 0);
   assert.equal(summary.skipped, 0);
+});
+
+test("counts invariant declarations independently of Foundry suite reporting", () => {
+  assert.equal(
+    countInvariantFunctions("contracts/test"),
+    11,
+  );
 });
 
 test("accepts synchronized documentation counts", () => {

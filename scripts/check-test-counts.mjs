@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -92,6 +92,17 @@ export function parseFoundryJson(output) {
   return { total: unit + invariants, unit, invariants, failed, skipped, suites };
 }
 
+export function countInvariantFunctions(testRoot = path.join(CONTRACTS, "test")) {
+  let count = 0;
+  for (const entry of readdirSync(testRoot, { withFileTypes: true, recursive: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".sol")) continue;
+    const file = path.join(entry.parentPath ?? testRoot, entry.name);
+    count += (readFileSync(file, "utf8").match(/^\s*function\s+invariant_[A-Za-z0-9_]+\s*\(/gm) ?? []).length;
+  }
+  if (count === 0) throw new Error("could not find invariant functions in the Foundry test tree");
+  return count;
+}
+
 export function run() {
   const result = spawnSync("forge", ["test", "--json"], {
     cwd: CONTRACTS,
@@ -102,6 +113,8 @@ export function run() {
   if (result.error) throw new Error(`could not run forge: ${result.error.message}`);
   if (result.status !== 0) throw new Error(`forge test failed with exit code ${result.status}`);
   const summary = parseFoundryJson(output);
+  summary.invariants = countInvariantFunctions();
+  summary.total = summary.unit + summary.invariants;
   if (summary.failed !== 0 || summary.skipped !== 0) {
     throw new Error(`Foundry summary contains ${summary.failed} failed and ${summary.skipped} skipped tests`);
   }
