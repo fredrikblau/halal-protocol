@@ -37,6 +37,9 @@ jobs:
             app:
               - 'app/**'
               - 'scripts/**'
+              # Monitoring-only checks do not change the dApp build or its local smoke fixture.
+              - '!scripts/check-psm-health.sh'
+              - '!scripts/test/health-check.test.mjs'
               - 'Makefile'
             docs:
               - '**/*.md'
