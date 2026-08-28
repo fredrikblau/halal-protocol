@@ -42,6 +42,9 @@ criteria, and a safe local verification path:
   record safe Anvil-only wiring and health rehearsals.
 - [CPI source policy documentation (#80)](https://github.com/fredrikblau/halal-protocol/issues/80) —
   document how operators record source identity, cadence, custody, and fallback decisions.
+- [Rebasing reserve-token model (#159)](https://github.com/fredrikblau/halal-protocol/issues/159) —
+  add a deterministic balance-changing reserve mock and focused/invariant coverage without changing
+  production deployment policy.
 - The [accounting-aware transfer validation task (#156)](https://github.com/fredrikblau/halal-protocol/issues/156) is
   currently claimed in [PR #157](https://github.com/fredrikblau/halal-protocol/pull/157); review and follow-up
   improvements remain welcome.
