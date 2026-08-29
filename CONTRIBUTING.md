@@ -25,9 +25,11 @@ for the clean-clone tool check, disposable local smoke test, and first contribut
 These tasks are intentionally bounded and do not require a wallet, private key, RPC credential,
 deployment, or real funds:
 
-- [#80 — record a CPI source-policy decision](https://github.com/fredrikblau/halal-protocol/issues/80)
 - [#118 — verify the clean-clone quickstart on another environment](https://github.com/fredrikblau/halal-protocol/issues/118)
 - [#166 — add fail-closed deployment-manifest tests](https://github.com/fredrikblau/halal-protocol/issues/166)
+
+The CPI source-policy task is already claimed in [PR #169](https://github.com/fredrikblau/halal-protocol/pull/169).
+Review or improve that PR rather than opening a duplicate.
 
 Read the issue acceptance criteria, comment with your intended approach, and open a focused PR.
 If a task is already claimed or has an active contributor PR, choose another starter issue or

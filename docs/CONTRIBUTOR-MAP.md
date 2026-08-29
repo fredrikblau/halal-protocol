@@ -17,7 +17,8 @@ Choose the task that matches your interests; each issue includes a bounded scope
 criteria, and a safe local verification path:
 
 - [CPI source policy documentation (#80)](https://github.com/fredrikblau/halal-protocol/issues/80) —
-  document how operators record source identity, cadence, custody, and fallback decisions.
+  claimed in [contributor PR #169](https://github.com/fredrikblau/halal-protocol/pull/169); review or
+  improve that PR rather than opening a duplicate.
 - [Clean-clone verification on another environment (#118)](https://github.com/fredrikblau/halal-protocol/issues/118) —
   follow the quickstart on a second environment and report tool versions, commands, and the final
   result; no wallet, credentials, deployment, or real funds are needed.

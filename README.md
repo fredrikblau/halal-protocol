@@ -36,10 +36,11 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
 - Use the [local-demo troubleshooting guide](docs/LOCAL-DEMO-TROUBLESHOOTING.md) if a prerequisite,
   port, or stale local configuration blocks the demo.
 - Run `make verify` before opening a pull request.
-- Pick one of the three currently available [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22):
-  [CPI source-policy documentation](https://github.com/fredrikblau/halal-protocol/issues/80) or
-  [clean-clone verification on another environment](https://github.com/fredrikblau/halal-protocol/issues/118), or
+- Pick one of the two currently unclaimed [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22):
+  [clean-clone verification on another environment](https://github.com/fredrikblau/halal-protocol/issues/118) or
   [fail-closed deployment-manifest tests](https://github.com/fredrikblau/halal-protocol/issues/166).
+  The CPI source-policy task is already claimed in [contributor PR #169](https://github.com/fredrikblau/halal-protocol/pull/169);
+  review or improve that PR instead of opening a duplicate.
 - Review the contributor's [protocol glossary PR](https://github.com/fredrikblau/halal-protocol/pull/147)
   and verify its terminology against the current contracts and implementation.
 - Review or extend the contributor-owned [accessibility smoke-coverage PR](https://github.com/fredrikblau/halal-protocol/pull/107)
