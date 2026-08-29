@@ -1,8 +1,15 @@
 # Deployed logic and deployment automation deserve review from the repository maintainer.
 /contracts/src/ @fredrikblau
 /contracts/script/ @fredrikblau
+/contracts/lib/ @fredrikblau
+/contracts/foundry.toml @fredrikblau
+/contracts/foundry.lock @fredrikblau
 /scripts/ @fredrikblau
+/Makefile @fredrikblau
+/app/package.json @fredrikblau
+/app/pnpm-lock.yaml @fredrikblau
 /.github/workflows/ @fredrikblau
+/.github/dependabot.yml @fredrikblau
 
 # Keep ownership policy changes visible to the maintainer.
 /.github/CODEOWNERS @fredrikblau
