@@ -48,9 +48,9 @@ criteria, and a safe local verification path:
   demonstrates how to separate observations, assumptions, residual risks, and decisions.
 - The completed [local deployment evidence example](LOCAL-DEPLOYMENT-EVIDENCE.md) shows how to
   record safe Anvil-only wiring and health rehearsals.
-- The completed [deployment manifest source-label round trip (#100)](https://github.com/fredrikblau/halal-protocol/issues/100)
-  is available as a reference for offline recorder-to-registry regression tests; it is not an active
-  starter task.
+- The implementation for [deployment manifest source-label round trip (#100)](https://github.com/fredrikblau/halal-protocol/issues/100)
+  is available in [PR #106](https://github.com/fredrikblau/halal-protocol/pull/106) for review; it is
+  not an active starter task.
 - [CPI source-label reviewer checklist](CPI-ADAPTER-SPEC.md#reviewer-checklist-before-a-governed-handoff) —
   review the PSM label, adapter source ID, policy record, and deployment evidence before a governed handoff;
   the implementation is complete, so use the open issue list for current contributor tasks.
