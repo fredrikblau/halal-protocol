@@ -29,8 +29,9 @@ for the clean-clone tool check, disposable local smoke test, and first contribut
 6. Be responsive to review feedback. A maintainer will merge once checks pass and review is
    satisfied.
 
-The `main` branch is protected: changes must arrive through a pull request, receive one approval,
-pass path detection plus every applicable Contracts, Scripts, generated-ABI, and
+The `main` branch is protected: changes must arrive through a pull request, receive one approval
+and, when covered by `CODEOWNERS`, approval from the listed owner. They must also pass path
+detection plus every applicable Contracts, Scripts, generated-ABI, and
 Frontend CI check, use linear history, and resolve review conversations. Path-filtered jobs are
 skipped safely for unrelated documentation changes. Administrators may bypass the rule for repository
 recovery, but normal development should use the review path.
