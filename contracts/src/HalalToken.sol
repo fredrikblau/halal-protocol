@@ -27,6 +27,7 @@ contract HalalToken is ERC20, ERC20Permit, ERC20Votes, AccessControl {
     bool public genesisMinted;
 
     error ZeroAddress();
+    error NotContract();
     error GenesisAlreadyMinted();
     error GenesisRecipientsNotDistinct();
 
@@ -45,6 +46,10 @@ contract HalalToken is ERC20, ERC20Permit, ERC20Votes, AccessControl {
         if (genesisMinted) revert GenesisAlreadyMinted();
         if (teamVesting == address(0) || treasuryVesting == address(0)) revert ZeroAddress();
         if (teamVesting == treasuryVesting) revert GenesisRecipientsNotDistinct();
+        // Genesis balances are intentionally held by vesting contracts, not externally owned
+        // accounts. Since this one-time mint cannot be corrected after execution, reject a
+        // mistyped or undeployed recipient before any supply is created.
+        if (teamVesting.code.length == 0 || treasuryVesting.code.length == 0) revert NotContract();
         genesisMinted = true;
         _mint(teamVesting, TEAM_ALLOCATION);
         _mint(treasuryVesting, TREASURY_ALLOCATION);

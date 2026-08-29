@@ -29,6 +29,12 @@ contract HalalTokenTest is Deployers {
         freshToken.initialMint(address(0xBEEF), address(0xBEEF));
     }
 
+    function test_RevertWhen_GenesisVestingRecipientIsNotContract() public {
+        HalalToken freshToken = new HalalToken(address(this));
+        vm.expectRevert(HalalToken.NotContract.selector);
+        freshToken.initialMint(address(0xBEEF), address(0xCAFE));
+    }
+
     function test_DeployerHasNoRolesAfterSetup() public view {
         assertFalse(token.hasRole(token.DEFAULT_ADMIN_ROLE(), deployer));
         assertFalse(token.hasRole(token.MINTER_ROLE(), deployer));
