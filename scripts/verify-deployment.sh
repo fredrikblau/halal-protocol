@@ -141,6 +141,17 @@ if [[ "${ALLOW_DEPLOYER_BENEFICIARY:-false}" != "true" && "$TEAM_BENEFICIARY" ==
   exit 1
 fi
 
+if [[ "${ALLOW_DEPLOYER_BENEFICIARY:-false}" == "true" ]]; then
+  if [[ "$EXPECTED_CHAIN_ID" != "31337" ]]; then
+    echo "FAILED: ALLOW_DEPLOYER_BENEFICIARY=true is restricted to Anvil chain 31337" >&2
+    exit 1
+  fi
+  case "$RPC_URL" in
+    http://127.0.0.1:*|http://localhost:*|http://\[::1\]:*) ;;
+    *) echo "FAILED: ALLOW_DEPLOYER_BENEFICIARY=true requires a loopback HTTP RPC" >&2; exit 1 ;;
+  esac
+fi
+
 expect_contract "timelock" "$TIMELOCK"
 expect_contract "token" "$TOKEN"
 expect_contract "team vesting" "$TEAM_VESTING"

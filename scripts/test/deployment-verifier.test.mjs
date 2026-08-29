@@ -29,7 +29,7 @@ function fakeCastScript() {
   return `#!/usr/bin/env bash
 set -euo pipefail
 case "$1" in
-  chain-id) echo 421614 ;;
+  chain-id) echo "\${FAKE_CHAIN_ID:-421614}" ;;
   code) [[ -n "\${FAKE_EOA:-}" && "$2" == "$FAKE_EOA" ]] && echo 0x || echo 0x1234 ;;
   call)
     target="$2"
@@ -150,4 +150,20 @@ test("deployment verifier rejects an EOA CPI adapter owner", () => {
   });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /CPI adapter owner has no deployed contract bytecode/);
+});
+
+test("deployment verifier rejects the local beneficiary escape hatch on a remote chain", () => {
+  const result = runVerifier(false, { ALLOW_DEPLOYER_BENEFICIARY: "true" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /restricted to Anvil chain 31337/);
+});
+
+test("deployment verifier permits the beneficiary escape hatch only on loopback Anvil", () => {
+  const result = runVerifier(false, {
+    ALLOW_DEPLOYER_BENEFICIARY: "true",
+    EXPECTED_CHAIN_ID: "31337",
+    FAKE_CHAIN_ID: "31337",
+    RPC_URL: "http://127.0.0.1:8545",
+  });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
 });
