@@ -35,6 +35,10 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
 - Follow the [local development walkthrough](docs/LOCAL-DEVELOPMENT.md) from a clean checkout.
 - Use the [local-demo troubleshooting guide](docs/LOCAL-DEMO-TROUBLESHOOTING.md) if a prerequisite,
   port, or stale local configuration blocks the demo.
+- Review the [proposed CPI source-policy record](docs/CPI-SOURCE-POLICY.md) (based on the
+  [template](docs/CPI-SOURCE-POLICY-TEMPLATE.md)) documenting the reporting trust boundary:
+  source series, publisher identity, cadence, freshness, fallback, updater custody, and
+  incident response. This record is a proposal under review, not production approval.
 - Run `make verify` before opening a pull request.
 - Pick a bounded task from the [open good-first-issue list](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22),
   such as [deployment-manifest source-label testing](https://github.com/fredrikblau/halal-protocol/issues/100),
