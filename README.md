@@ -36,9 +36,10 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
 - Use the [local-demo troubleshooting guide](docs/LOCAL-DEMO-TROUBLESHOOTING.md) if a prerequisite,
   port, or stale local configuration blocks the demo.
 - Run `make verify` before opening a pull request.
-- Pick one of the two currently available [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22):
+- Pick one of the three currently available [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22):
   [CPI source-policy documentation](https://github.com/fredrikblau/halal-protocol/issues/80) or
-  [clean-clone verification on another environment](https://github.com/fredrikblau/halal-protocol/issues/118).
+  [clean-clone verification on another environment](https://github.com/fredrikblau/halal-protocol/issues/118), or
+  [fail-closed deployment-manifest tests](https://github.com/fredrikblau/halal-protocol/issues/166).
 - Review or extend the contributor-owned [accessibility smoke-coverage PR](https://github.com/fredrikblau/halal-protocol/pull/107)
   and its [tracking issue](https://github.com/fredrikblau/halal-protocol/issues/102); do not duplicate the
   implementation unless the PR's author or maintainers request it.

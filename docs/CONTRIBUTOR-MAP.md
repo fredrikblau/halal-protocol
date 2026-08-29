@@ -21,6 +21,9 @@ criteria, and a safe local verification path:
 - [Clean-clone verification on another environment (#118)](https://github.com/fredrikblau/halal-protocol/issues/118) —
   follow the quickstart on a second environment and report tool versions, commands, and the final
   result; no wallet, credentials, deployment, or real funds are needed.
+- [Fail-closed deployment-manifest tests (#166)](https://github.com/fredrikblau/halal-protocol/issues/166) —
+  add negative-path tests for the offline deployment recorder, including its no-write-on-failure
+  boundary; use temporary fixtures and a fake `cast` binary with no wallet or RPC credentials.
 - [Accessibility smoke coverage (#102)](https://github.com/fredrikblau/halal-protocol/issues/102) is
   implemented in contributor-owned [PR #107](https://github.com/fredrikblau/halal-protocol/pull/107);
   review or extend that PR rather than duplicating its implementation.
