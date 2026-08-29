@@ -20,6 +20,19 @@ bar than a typical app repo — see the [roadmap](docs/ROADMAP.md) and [Changes 
 New to the repository? Follow the [ten-minute contributor quickstart](docs/CONTRIBUTOR-QUICKSTART.md)
 for the clean-clone tool check, disposable local smoke test, and first contribution path.
 
+### Current starter issues
+
+These tasks are intentionally bounded and do not require a wallet, private key, RPC credential,
+deployment, or real funds:
+
+- [#80 — record a CPI source-policy decision](https://github.com/fredrikblau/halal-protocol/issues/80)
+- [#118 — verify the clean-clone quickstart on another environment](https://github.com/fredrikblau/halal-protocol/issues/118)
+- [#166 — add fail-closed deployment-manifest tests](https://github.com/fredrikblau/halal-protocol/issues/166)
+
+Read the issue acceptance criteria, comment with your intended approach, and open a focused PR.
+If a task is already claimed or has an active contributor PR, choose another starter issue or
+help review the existing work instead of duplicating it.
+
 1. Fork the repository and clone your fork.
 2. Create a topic branch off `main`: `git checkout -b feat/short-description`.
 3. Make your changes, following the code style and testing expectations below.
