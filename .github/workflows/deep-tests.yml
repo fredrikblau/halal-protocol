@@ -37,8 +37,9 @@ jobs:
     name: Extended fuzzing and invariants
     needs: changes
     # Keep the required check visible and successful for docs-only PRs without spending the full
-    # deep-test budget. Scheduled, main-branch, and manually dispatched runs always execute.
-    if: github.event_name != 'pull_request' || needs.changes.outputs.contracts == 'true'
+    # deep-test budget. The job itself must not be skipped: a skipped required job can leave the
+    # branch-protection context pending. Scheduled, main-branch, and manually dispatched runs
+    # always execute the full suite.
     runs-on: ubuntu-latest
     # Extended fuzzing is intentionally heavier than the PR gate, but it must still fail visibly
     # if a runner or Foundry process stops making progress.
@@ -51,19 +52,28 @@ jobs:
       FOUNDRY_INVARIANT_RUNS: 128
       FOUNDRY_INVARIANT_DEPTH: 64
     steps:
+      - name: Skip deep tests for docs-only changes
+        if: github.event_name == 'pull_request' && needs.changes.outputs.contracts != 'true'
+        run: echo "No contract-affecting paths changed; required deep-test gate is satisfied."
+
       - name: Checkout (with submodules)
+        if: github.event_name != 'pull_request' || needs.changes.outputs.contracts == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           submodules: recursive
 
       - name: Install Foundry
+        if: github.event_name != 'pull_request' || needs.changes.outputs.contracts == 'true'
         uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1
 
       - name: Extended PSM fuzz test
+        if: github.event_name != 'pull_request' || needs.changes.outputs.contracts == 'true'
         run: forge test --match-test testFuzz_RoundTripNeverOverpays
 
       - name: Extended PSM arithmetic differential tests
+        if: github.event_name != 'pull_request' || needs.changes.outputs.contracts == 'true'
         run: forge test --match-path test/HalalPSMArithmetic.t.sol
 
       - name: Extended PSM invariant suite
+        if: github.event_name != 'pull_request' || needs.changes.outputs.contracts == 'true'
         run: forge test --match-path test/HalalPSMInvariant.t.sol
