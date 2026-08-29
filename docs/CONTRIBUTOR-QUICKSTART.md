@@ -16,6 +16,14 @@ cast --version
 pnpm --dir app install --frozen-lockfile
 ```
 
+If Docker is available, run the same pinned GitHub Actions workflow check used by CI:
+
+```shell
+make workflow-lint
+```
+
+This is an optional local check; the hosted workflow-lint job runs for every pull request.
+
 ## 2. See the complete protocol locally
 
 ```shell
