@@ -21,6 +21,15 @@ done
 
 command -v cast >/dev/null || { echo "cast is required (install Foundry first)" >&2; exit 1; }
 
+case "$RPC_URL" in
+  https://*) ;;
+  http://127.0.0.1:*|http://localhost:*|http://\[::1\]:*) ;;
+  *)
+    echo "RPC_URL must use HTTPS, or loopback HTTP for a disposable local demo" >&2
+    exit 1
+    ;;
+esac
+
 call() {
   # Foundry may append a human-readable scientific-notation rendering to large integers.
   # Keep the canonical first field so exact checks remain stable across cast versions.

@@ -77,7 +77,7 @@ function runVerifier(withAdapter, overrides = {}) {
   const env = {
     ...process.env,
     PATH: `${directory}:${process.env.PATH}`,
-    RPC_URL: "http://fake-rpc.invalid",
+    RPC_URL: "https://fake-rpc.invalid",
     EXPECTED_CHAIN_ID: "421614",
     TIMELOCK: ADDRESSES.timelock,
     TOKEN: ADDRESSES.token,
@@ -166,4 +166,10 @@ test("deployment verifier permits the beneficiary escape hatch only on loopback 
     RPC_URL: "http://127.0.0.1:8545",
   });
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+});
+
+test("deployment verifier rejects insecure remote RPC URLs", () => {
+  const result = runVerifier(false, { RPC_URL: "http://rpc.example.invalid" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /RPC_URL must use HTTPS/);
 });
