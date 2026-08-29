@@ -25,6 +25,9 @@ criteria, and a safe local verification path:
 - [Fail-closed deployment-manifest tests (#166)](https://github.com/fredrikblau/halal-protocol/issues/166) —
   add negative-path tests for the offline deployment recorder, including its no-write-on-failure
   boundary; use temporary fixtures and a fake `cast` binary with no wallet or RPC credentials.
+- [CPI adapter configuration and ownership tests (#173)](https://github.com/fredrikblau/halal-protocol/issues/173) —
+  cover signer, threshold, and two-step ownership boundaries with deterministic local keys and a mock sink;
+  no deployment or real credentials are needed.
 - [Protocol glossary documentation (#117)](https://github.com/fredrikblau/halal-protocol/issues/117) is
   implemented in contributor-facing [PR #147](https://github.com/fredrikblau/halal-protocol/pull/147);
   review its terminology against the current contracts instead of duplicating the implementation.

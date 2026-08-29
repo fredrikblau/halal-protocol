@@ -27,6 +27,7 @@ deployment, or real funds:
 
 - [#118 — verify the clean-clone quickstart on another environment](https://github.com/fredrikblau/halal-protocol/issues/118)
 - [#166 — add fail-closed deployment-manifest tests](https://github.com/fredrikblau/halal-protocol/issues/166)
+- [#173 — cover CPI adapter configuration and ownership boundaries](https://github.com/fredrikblau/halal-protocol/issues/173)
 
 The CPI source-policy task is already claimed in [PR #169](https://github.com/fredrikblau/halal-protocol/pull/169).
 Review or improve that PR rather than opening a duplicate.
