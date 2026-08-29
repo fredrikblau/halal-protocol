@@ -24,9 +24,9 @@ criteria, and a safe local verification path:
 - [Fail-closed deployment-manifest tests (#166)](https://github.com/fredrikblau/halal-protocol/issues/166) —
   add negative-path tests for the offline deployment recorder, including its no-write-on-failure
   boundary; use temporary fixtures and a fake `cast` binary with no wallet or RPC credentials.
-- [Protocol glossary documentation (#117)](https://github.com/fredrikblau/halal-protocol/issues/117) —
-  define the core protocol terms in a short linked glossary, distinguishing implemented behavior
-  from design intent; no wallet, RPC, deployment, or Solidity changes are needed.
+- [Protocol glossary documentation (#117)](https://github.com/fredrikblau/halal-protocol/issues/117) is
+  implemented in contributor-facing [PR #147](https://github.com/fredrikblau/halal-protocol/pull/147);
+  review its terminology against the current contracts instead of duplicating the implementation.
 - [Accessibility smoke coverage (#102)](https://github.com/fredrikblau/halal-protocol/issues/102) is
   implemented in contributor-owned [PR #107](https://github.com/fredrikblau/halal-protocol/pull/107);
   review or extend that PR rather than duplicating its implementation.
