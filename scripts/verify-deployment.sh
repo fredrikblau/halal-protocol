@@ -206,6 +206,7 @@ fi
 
 if [[ -n "${CPI_ADAPTER:-}" ]]; then
   expect_contract "CPI adapter" "$CPI_ADAPTER"
+  expect_contract "CPI adapter owner" "$EXPECTED_CPI_ADAPTER_OWNER"
   expect_equal "CPI adapter PSM" "$(address_call "$CPI_ADAPTER" 'psm()(address)')" "$PSM"
   expect_equal "CPI adapter owner" "$(address_call "$CPI_ADAPTER" 'owner()(address)')" "$EXPECTED_CPI_ADAPTER_OWNER"
   expect_equal "CPI adapter source ID" "$(address_call "$CPI_ADAPTER" 'sourceId()(bytes32)')" "$EXPECTED_CPI_SOURCE_ID"

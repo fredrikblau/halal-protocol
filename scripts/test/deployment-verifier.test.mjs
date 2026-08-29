@@ -142,3 +142,12 @@ test("deployment verifier rejects EOA production beneficiaries", () => {
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /team beneficiary has no deployed contract bytecode/);
 });
+
+test("deployment verifier rejects an EOA CPI adapter owner", () => {
+  const result = runVerifier(true, {
+    FAKE_EOA: ADDRESSES.signerOne,
+    EXPECTED_CPI_ADAPTER_OWNER: ADDRESSES.signerOne,
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /CPI adapter owner has no deployed contract bytecode/);
+});
