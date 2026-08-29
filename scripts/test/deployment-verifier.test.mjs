@@ -30,7 +30,7 @@ function fakeCastScript() {
 set -euo pipefail
 case "$1" in
   chain-id) echo 421614 ;;
-  code) echo 0x1234 ;;
+  code) [[ -n "\${FAKE_EOA:-}" && "$2" == "$FAKE_EOA" ]] && echo 0x || echo 0x1234 ;;
   call)
     target="$2"
     signature="$3"
@@ -126,4 +126,19 @@ test("deployment verifier rejects a changed PSM CPI source label", () => {
   const result = runVerifier(true, { EXPECTED_CPI_SOURCE: "different-source" });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /PSM CPI source/);
+});
+
+test("deployment verifier rejects shared production beneficiaries", () => {
+  const result = runVerifier(false, {
+    TEAM_BENEFICIARY: ADDRESSES.teamBeneficiary,
+    TREASURY_BENEFICIARY: ADDRESSES.teamBeneficiary,
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /team and treasury beneficiaries must be distinct/);
+});
+
+test("deployment verifier rejects EOA production beneficiaries", () => {
+  const result = runVerifier(false, { FAKE_EOA: ADDRESSES.teamBeneficiary });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /team beneficiary has no deployed contract bytecode/);
 });

@@ -136,6 +136,11 @@ if [[ "${ALLOW_DEPLOYER_BENEFICIARY:-false}" != "true" && (
   exit 1
 fi
 
+if [[ "${ALLOW_DEPLOYER_BENEFICIARY:-false}" != "true" && "$TEAM_BENEFICIARY" == "$TREASURY_BENEFICIARY" ]]; then
+  echo "FAILED: production team and treasury beneficiaries must be distinct" >&2
+  exit 1
+fi
+
 expect_contract "timelock" "$TIMELOCK"
 expect_contract "token" "$TOKEN"
 expect_contract "team vesting" "$TEAM_VESTING"
@@ -143,6 +148,10 @@ expect_contract "treasury vesting" "$TREASURY_VESTING"
 expect_contract "DAO" "$DAO"
 expect_contract "PSM" "$PSM"
 expect_contract "reserve token" "$RESERVE_TOKEN"
+if [[ "${ALLOW_DEPLOYER_BENEFICIARY:-false}" != "true" ]]; then
+  expect_contract "team beneficiary" "$TEAM_BENEFICIARY"
+  expect_contract "treasury beneficiary" "$TREASURY_BENEFICIARY"
+fi
 
 expect_equal "PSM reserve" "$(address_call "$PSM" 'reserve()(address)')" "$RESERVE_TOKEN"
 expect_equal "PSM HLC token" "$(address_call "$PSM" 'hlc()(address)')" "$TOKEN"
