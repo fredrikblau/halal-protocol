@@ -54,6 +54,7 @@ jobs:
     steps:
       - name: Skip deep tests for docs-only changes
         if: github.event_name == 'pull_request' && needs.changes.outputs.contracts != 'true'
+        working-directory: ${{ github.workspace }}
         run: echo "No contract-affecting paths changed; required deep-test gate is satisfied."
 
       - name: Checkout (with submodules)
