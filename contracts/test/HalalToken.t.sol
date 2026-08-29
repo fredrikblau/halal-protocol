@@ -65,6 +65,17 @@ contract HalalTokenTest is Deployers {
         assertEq(token.balanceOf(address(0xCAFE)), 500e18);
     }
 
+    function test_RevertWhen_MintOrBurnRoleTargetsEOA() public {
+        bytes32 minterRole = token.MINTER_ROLE();
+        bytes32 burnerRole = token.BURNER_ROLE();
+        vm.startPrank(address(timelock));
+        vm.expectRevert(HalalToken.RoleRecipientNotContract.selector);
+        token.grantRole(minterRole, address(0xCAFE));
+        vm.expectRevert(HalalToken.RoleRecipientNotContract.selector);
+        token.grantRole(burnerRole, address(0xCAFE));
+        vm.stopPrank();
+    }
+
     function test_PsmCanBurnItsOwnTokens() public {
         vm.prank(address(psm));
         token.burn(0);
