@@ -27,6 +27,9 @@ Anvil chain, deploys the wired contracts, seeds a fresh local CPI report, and op
 with a faucet-backed local reserve.
 No external RPC key or real funds are needed for the demo.
 
+If the protocol idea or the engineering work is useful to you, consider [starring the repository](https://github.com/fredrikblau/halal-protocol/stargazers)
+and [forking it](https://github.com/fredrikblau/halal-protocol/forks) to experiment or contribute.
+
 ## Contribute
 
 Start with the [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22):
