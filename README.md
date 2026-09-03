@@ -27,6 +27,9 @@ Anvil chain, deploys the wired contracts, seeds a fresh local CPI report, and op
 with a faucet-backed local reserve.
 No external RPC key or real funds are needed for the demo.
 
+If the protocol idea or the engineering work is useful to you, consider [starring the repository](https://github.com/fredrikblau/halal-protocol/stargazers)
+and [forking it](https://github.com/fredrikblau/halal-protocol/forks) to experiment or contribute.
+
 ## Contribute
 
 Start with the [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22):
@@ -36,12 +39,17 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
 - Use the [local-demo troubleshooting guide](docs/LOCAL-DEMO-TROUBLESHOOTING.md) if a prerequisite,
   port, or stale local configuration blocks the demo.
 - Run `make verify` before opening a pull request.
-- Pick a bounded task from the [open good-first-issue list](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22),
-  such as [deployment-manifest source-label testing](https://github.com/fredrikblau/halal-protocol/issues/100),
-  [CPI source policy documentation](https://github.com/fredrikblau/halal-protocol/issues/80), or
-  [accessibility smoke coverage](https://github.com/fredrikblau/halal-protocol/issues/102).
-- Improve the dApp's inclusive, fail-closed states with the
-  [accessibility smoke-coverage issue](https://github.com/fredrikblau/halal-protocol/issues/102).
+- Pick one of the three currently unclaimed [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22):
+  [clean-clone verification on another environment](https://github.com/fredrikblau/halal-protocol/issues/118) or
+  [fail-closed deployment-manifest tests](https://github.com/fredrikblau/halal-protocol/issues/166), or
+  [CPI adapter configuration and ownership tests](https://github.com/fredrikblau/halal-protocol/issues/173).
+  The CPI source-policy task is already claimed in [contributor PR #169](https://github.com/fredrikblau/halal-protocol/pull/169);
+  review or improve that PR instead of opening a duplicate.
+- Review the contributor's [protocol glossary PR](https://github.com/fredrikblau/halal-protocol/pull/147)
+  and verify its terminology against the current contracts and implementation.
+- Review or extend the contributor-owned [accessibility smoke-coverage PR](https://github.com/fredrikblau/halal-protocol/pull/107)
+  and its [tracking issue](https://github.com/fredrikblau/halal-protocol/issues/102); do not duplicate the
+  implementation unless the PR's author or maintainers request it.
 - Help coordinate the first carefully gated [Arbitrum Sepolia deployment](https://github.com/fredrikblau/halal-protocol/issues/40).
 - Review the bounded [security challenge](https://github.com/fredrikblau/halal-protocol/issues/16) or
   [production CPI adapter design](https://github.com/fredrikblau/halal-protocol/issues/17).
