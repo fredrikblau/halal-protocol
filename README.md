@@ -160,6 +160,8 @@ walkthrough, and the exact API surface — see:
   number or behavior described in the docs above is exactly what the code does.
 - [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md) — assets, trust boundaries, attack scenarios,
   mitigations, and unresolved risks for reviewers and deployment operators.
+- [`docs/SECURITY-REVIEW-QUICKSTART.md`](docs/SECURITY-REVIEW-QUICKSTART.md) — reproducible
+  security-review commands, bounded review questions, evidence expectations, and safe reporting.
 - [`docs/OPERATOR-RUNBOOK.md`](docs/OPERATOR-RUNBOOK.md) — launch acceptance, monitoring, CPI
   updater operations, governance review, and incident response.
 - [`scripts/verify-governance-payload.mjs`](scripts/verify-governance-payload.mjs) — offline,
