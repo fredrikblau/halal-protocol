@@ -32,11 +32,11 @@ contract HalalToken is ERC20, ERC20Permit, ERC20Votes, AccessControl {
     error GenesisRecipientsNotDistinct();
 
     /// @param admin Temporary deployer-controlled admin; deploy script must transfer this to the DAO
-    /// timelock and revoke the deployer's own roles once the full system is wired up.
+    /// timelock and revoke the deployer's own admin role once the full system is wired up. The
+    /// deployer is deliberately not a minter; deployment grants MINTER_ROLE only to the PSM.
     constructor(address admin) ERC20("Halal", "HLC") ERC20Permit("Halal") {
         if (admin == address(0)) revert ZeroAddress();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        _grantRole(MINTER_ROLE, admin);
     }
 
     /// @notice One-time genesis mint of the fixed 6M/4M team/treasury allocation. Callable once by

@@ -86,6 +86,12 @@ contract HalalTokenTest is Deployers {
         new HalalToken(address(0));
     }
 
+    function test_ConstructorAdminIsNotADeployerMinter() public {
+        HalalToken freshToken = new HalalToken(address(this));
+        vm.expectRevert();
+        freshToken.mint(address(0xCAFE), 1e18);
+    }
+
     function test_PermitApproval() public {
         (address alice, uint256 aliceKey) = makeAddrAndKey("alice");
         giveVotingPower(alice, 100e18);
