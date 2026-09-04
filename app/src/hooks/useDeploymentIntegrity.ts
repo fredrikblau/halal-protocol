@@ -116,7 +116,8 @@ export function useDeploymentIntegrity() {
         expected?.cpiPolicyUrl !== undefined;
 
   const readFailed = hasReadFailure(data);
-  const isVerified =
+  const integrityReadError = isError || readFailed;
+  const configurationMatches =
     expected !== undefined &&
     reserve?.toLowerCase() === expected.reserveToken.toLowerCase() &&
     psmToken?.toLowerCase() === expected.token.toLowerCase() &&
@@ -150,10 +151,15 @@ export function useDeploymentIntegrity() {
         adapterThreshold <= adapterSignerCount &&
         BigInt(adapterSigners.length) === adapterSignerCount)));
 
+  // A refetch can retain the last successful result while reporting a current RPC error. Never
+  // leave signing enabled from that stale snapshot: a failed refresh must be treated as
+  // unverified until the complete contract graph is read successfully again.
+  const isVerified = configurationMatches && !integrityReadError;
+
   return {
     isVerified,
     isChecking: deployment !== undefined && (isLoading || data === undefined),
-    isError: isError || readFailed,
+    isError: integrityReadError,
     error: error ?? (readFailed ? partialReadError() : undefined),
     refetch,
   };

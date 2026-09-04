@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { validateAdapterSignerSet, validateReportState, validateSignatureSet, validateTypedData } from "../verify-cpi-report.mjs";
+import { requirePositiveSignatureVerification, validateAdapterSignerSet, validateReportState, validateSignatureSet, validateTypedData } from "../verify-cpi-report.mjs";
 
 const signerOne = "0x1111111111111111111111111111111111111111";
 const signerTwo = "0x2222222222222222222222222222222222222222";
@@ -60,6 +60,12 @@ test("requires the adapter signer count to match its enumerated signer set", () 
   );
 });
 
+test("requires cast signature verification to return true", () => {
+  assert.doesNotThrow(() => requirePositiveSignatureVerification("Validation succeeded. Address 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC signed this message.\n", 0));
+  assert.throws(() => requirePositiveSignatureVerification("false\n", 0), /signature 0 failed verification/);
+  assert.throws(() => requirePositiveSignatureVerification("", 1), /signature 1 failed verification/);
+});
+
 test("rejects a typed data file for another domain", () => {
   assert.throws(() => validateTypedData({ ...typedData, domain: { ...typedData.domain, version: "2" } }), /domain/);
   assert.throws(() => validateTypedData({ ...typedData, primaryType: "OtherReport" }), /primaryType/);
@@ -75,14 +81,18 @@ test("preflights the live adapter and PSM report watermarks", () => {
       typedData,
       now: "1780001000",
       adapterLastSubmittedTimestamp: "0",
+      adapterLastSubmittedCPI: "0",
       psmLastReportTimestamp: "0",
+      psmCPI: "0",
       psmMaxReportAge: "7776000",
     }),
     {
       reportedAt: "1780000000",
       checkedAt: "1780001000",
       adapterPreviousReportTimestamp: "0",
+      adapterPreviousCPI: "0",
       psmPreviousReportTimestamp: "0",
+      psmCPI: "0",
       maxReportAge: "7776000",
     },
   );
@@ -92,12 +102,15 @@ test("rejects stale, replayed, and future reports before signature recovery", ()
   const base = {
     now: "1780001000",
     adapterLastSubmittedTimestamp: "0",
+    adapterLastSubmittedCPI: "0",
     psmLastReportTimestamp: "0",
+    psmCPI: "0",
     psmMaxReportAge: "7776000",
   };
   assert.throws(() => validateReportState({ typedData, ...base, now: "1787776001" }), /older than/);
   assert.throws(() => validateReportState({ typedData, ...base, adapterLastSubmittedTimestamp: "1780000000" }), /adapter watermark/);
   assert.throws(() => validateReportState({ typedData, ...base, psmLastReportTimestamp: "1780000000" }), /PSM watermark/);
+  assert.throws(() => validateReportState({ typedData, ...base, adapterLastSubmittedCPI: "1" }), /CPI rates diverge/);
   assert.throws(
     () => validateReportState({ typedData, ...base, now: "1779999999" }),
     /future for the live RPC/,

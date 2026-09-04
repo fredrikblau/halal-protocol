@@ -29,6 +29,9 @@ function deploymentCheck(integrity: ReturnType<typeof useDeploymentIntegrity>): 
 function reportCheck(psm: ReturnType<typeof usePsmState>, safety: ReturnType<typeof usePsmSafety>) {
   if (psm.isLoading) return { status: "loading" as const, detail: "Reading CPI report timestamps and freshness bounds." };
   if (psm.isError) return { status: "fail" as const, detail: getFriendlyErrorMessage(psm.error) };
+  if (psm.lastReportTimestamp === undefined || psm.maxReportAge === undefined) {
+    return { status: "fail" as const, detail: "CPI report freshness data could not be read. Refresh the page before relying on this status." };
+  }
   if (safety.reportTimestampMissing) return { status: "fail" as const, detail: "No timestamped CPI report has been accepted." };
   if (safety.reportStale) return { status: "fail" as const, detail: "The accepted CPI report is older than the contract freshness window." };
   if (safety.updateOverdue) return { status: "warn" as const, detail: "The normal updater cadence has elapsed; inspect the operator feed." };
@@ -49,8 +52,9 @@ function adapterCheck(deployment: DeploymentInfo["deployment"], adapter: ReturnT
   const quorumValid = adapter.threshold !== undefined && adapter.signerCount !== undefined && adapter.signers !== undefined && adapter.threshold > 0n && adapter.threshold <= adapter.signerCount && BigInt(adapter.signers.length) === adapter.signerCount;
   const wiringValid = deployment.cpiSource !== undefined && deployment.cpiSourceId !== undefined && psm.source === deployment.cpiSource && adapter.psm?.toLowerCase() === deployment.psm.toLowerCase() && adapter.owner?.toLowerCase() === deployment.timelock.toLowerCase() && adapter.sourceId?.toLowerCase() === deployment.cpiSourceId.toLowerCase();
   const watermarkValid = adapter.lastSubmittedTimestamp !== undefined && psm.lastReportTimestamp !== undefined && adapter.lastSubmittedTimestamp === psm.lastReportTimestamp;
-  if (!quorumValid || !wiringValid || !watermarkValid) return { status: "fail" as const, detail: "Adapter quorum, ownership, source identity, or report watermark diverges from the deployment." };
-  return { status: "pass" as const, detail: `${adapter.threshold} of ${adapter.signerCount} configured signers; adapter and PSM watermarks match.` };
+  const rateValid = adapter.lastSubmittedCPI !== undefined && psm.cpiRate !== undefined && adapter.lastSubmittedCPI === psm.cpiRate;
+  if (!quorumValid || !wiringValid || !watermarkValid || !rateValid) return { status: "fail" as const, detail: "Adapter quorum, ownership, source identity, CPI rate, or report watermark diverges from the deployment." };
+  return { status: "pass" as const, detail: `${adapter.threshold} of ${adapter.signerCount} configured signers; adapter and PSM CPI state matches.` };
 }
 
 export default function HealthPage() {

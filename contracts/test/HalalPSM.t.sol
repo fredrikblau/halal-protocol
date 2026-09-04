@@ -875,6 +875,16 @@ contract HalalPSMTest is Deployers {
         psm.setSource(" \t\n");
     }
 
+    function test_RevertWhen_DAOSetSourceFormFeedOrVerticalTabOnly() public {
+        vm.prank(address(timelock));
+        vm.expectRevert(HalalPSM.EmptySource.selector);
+        psm.setSource(string(abi.encodePacked(bytes1(0x0b))));
+
+        vm.prank(address(timelock));
+        vm.expectRevert(HalalPSM.EmptySource.selector);
+        psm.setSource(string(abi.encodePacked(bytes1(0x0c))));
+    }
+
     function test_DecimalNormalization_SixDecimalReserve() public {
         MockERC20 usdc = new MockERC20("Mock USDC", "mUSDC", 6);
         HalalPSM usdcPsm = new HalalPSM(address(usdc), address(token), address(timelock), address(0));
