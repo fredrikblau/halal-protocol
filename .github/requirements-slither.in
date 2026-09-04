@@ -1,0 +1,3 @@
+# Regenerate .github/requirements-slither.txt with pip-tools in Python 3.12.
+# The checked-in output is consumed with pip --require-hashes in CI.
+slither-analyzer==0.11.6
