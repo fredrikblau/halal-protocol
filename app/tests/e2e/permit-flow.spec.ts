@@ -326,7 +326,7 @@ test("renders deployment health without a wallet provider", async ({ page }) => 
   await expect(page.getByText("CPI report freshness")).toBeVisible();
   await expect(page.getByText("PSM reserve coverage")).toBeVisible();
   await expect(page.getByText("Signed CPI adapter")).toBeVisible();
-  await expect(page.getByText(/2 of 2 configured signers; adapter and PSM watermarks match/)).toBeVisible();
+  await expect(page.getByText(/2 of 2 configured signers; adapter and PSM CPI state matches/)).toBeVisible();
   const healthChecks = page.getByRole("list", { name: "Deployment health checks" });
   await expect(healthChecks.getByRole("listitem", { name: "Contract wiring and roles Healthy" })).toContainText("Addresses, roles, and timelock wiring match the configured deployment.");
   const cpiHealthCheck = healthChecks.getByRole("listitem", { name: /CPI report freshness (Healthy|Review|Blocking|Checking)/ });
@@ -347,6 +347,37 @@ test("renders deployment health without a wallet provider", async ({ page }) => 
   expect(copiedSummary).toMatch(/Chain ID: 31337/);
   expect(copiedSummary).toMatch(/CPI report freshness: (PASS|WARN|FAIL|LOADING)/);
   await expect(page.getByRole("link", { name: "Open protocol dashboard" })).toHaveAttribute("href", "/");
+});
+
+test("fails closed when a previously verified integrity refresh fails", async ({ page }) => {
+  const env = readLocalEnv();
+  const daoAddress = env.NEXT_PUBLIC_HLC_DAO_31337.toLowerCase();
+  let failRefresh = false;
+
+  await page.route(/127\.0\.0\.1:18545/, async (route) => {
+    const request = route.request();
+    const body = request.postDataJSON() as { method?: string; params?: Array<{ to?: string }> };
+    const call = body.params?.[0];
+    if (failRefresh && body.method === "eth_call" && call?.to?.toLowerCase() === daoAddress) {
+      await route.abort("connectionreset");
+      return;
+    }
+    await route.continue();
+  });
+
+  await installAnvilProvider(page);
+  await page.goto("/governance/new");
+  await expect(page.getByRole("heading", { name: "New Proposal" })).toBeVisible();
+  await expect(page.getByText("Connect your wallet to create a proposal.")).toBeVisible();
+  await expect(page.getByText("Deployment configuration could not be verified")).toHaveCount(0);
+
+  // Integrity verification refreshes every 30 seconds. Cached values must not keep proposal
+  // signing enabled after the next complete contract-graph read fails.
+  failRefresh = true;
+  await expect
+    .poll(() => page.getByText("Deployment configuration could not be verified").count(), { timeout: 45_000 })
+    .toBeGreaterThan(0);
+  await expect(page.getByRole("button", { name: "Submit proposal" })).toBeDisabled();
 });
 
 test("explains a supported network with no configured deployment", async ({ page }) => {
@@ -804,6 +835,36 @@ test("fails closed when reserve-token metadata cannot be read", async ({ page })
   expect(await page.evaluate(() => (window as Window & { __lastTransaction?: unknown }).__lastTransaction)).toBeUndefined();
 });
 
+test("blocks health when CPI freshness metadata cannot be read", async ({ page }) => {
+  const env = readLocalEnv();
+  const psmAddress = env.NEXT_PUBLIC_HLC_PSM_31337.toLowerCase();
+  await page.route(/127\.0\.0\.1:18545/, async (route) => {
+    const request = route.request();
+    const body = request.postDataJSON() as { method?: string; params?: Array<{ to?: string; data?: string }> };
+    const call = body.params?.[0];
+    if (
+      body.method === "eth_call" &&
+      call?.to?.toLowerCase() === psmAddress &&
+      ["0x57db845a", "0xb4a5f34d"].includes(call.data?.slice(0, 10).toLowerCase() ?? "")
+    ) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, error: { code: -32000, message: "CPI freshness metadata unavailable" } }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/health");
+  const healthChecks = page.getByRole("list", { name: "Deployment health checks" });
+  await expect(healthChecks.getByRole("listitem", { name: "CPI report freshness Blocking" })).toContainText(
+    "CPI report freshness data could not be read. Refresh the page before relying on this status.",
+  );
+  await expect(page.getByRole("status", { name: "Overall deployment health" })).toContainText("Blocking");
+});
+
 test("blocks reserve-deficit health and pauses new PSM deposits", async ({ page }) => {
   await seedRedeemableHlc();
   const testClient = createTestClient({ chain: LOCAL_CHAIN, mode: "anvil", transport: http(RPC_URL) });
@@ -1142,5 +1203,5 @@ test("blocks health when the adapter and PSM report watermarks diverge", async (
 
   await expect(page.getByRole("status", { name: "Overall deployment health" })).toContainText("Blocking");
   await expect(page.getByText("Signed CPI adapter")).toBeVisible();
-  await expect(page.getByText("Adapter quorum, ownership, source identity, or report watermark diverges from the deployment.")).toBeVisible();
+  await expect(page.getByText("Adapter quorum, ownership, source identity, CPI rate, or report watermark diverges from the deployment.")).toBeVisible();
 });

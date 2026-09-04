@@ -7,7 +7,7 @@ ACTIONLINT_IMAGE ?= rhysd/actionlint@sha256:887a259a5a534f3c4f36cb02dca341673c60
 help:
 	@printf '%s\n' 'Halal development commands:' '' '  make verify             Run the complete local verification suite' '  make contracts-test     Run the Foundry contract tests' '  make app-build          Build the Next.js dApp' '  make app-smoke          Deploy disposable Anvil state and smoke-test the dApp' '  make app-e2e            Exercise the browser permit flow on disposable Anvil state' '  make adapter-demo       Rehearse signed CPI reporting on disposable Anvil state' '  make deployment-preflight  Check registry readiness without RPC or credentials' '  make cpi-policy-check   Validate draft/reviewable CPI policy record fixtures offline' '  make markdown-links     Validate tracked Markdown links and anchors' '  make workflow-lint      Check GitHub Actions workflows with pinned actionlint (Docker)' '  make economic-model     Run the deterministic reserve-adequacy model' '' 'Read CONTRIBUTING.md before changing contracts/src/.'
 
-verify: registry-check shell-check oracle-test markdown-links adapter-demo contracts-build contracts-test contracts-lint app-lint app-smoke app-e2e
+verify: registry-check shell-check oracle-test cpi-policy-check markdown-links adapter-demo contracts-build contracts-test contracts-lint app-lint app-smoke app-e2e
 
 registry-check:
 	node scripts/validate-deployment-registry.mjs
