@@ -1177,6 +1177,11 @@ export const halalTokenAbi = [
   },
   {
     "type": "error",
+    "name": "NotContract",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "RoleRecipientNotContract",
     "inputs": []
   },

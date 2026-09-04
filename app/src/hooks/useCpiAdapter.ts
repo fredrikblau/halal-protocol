@@ -20,6 +20,7 @@ export function useCpiAdapter() {
           { address: adapter, abi: cpiReportAdapterAbi, functionName: "signerCount" },
           { address: adapter, abi: cpiReportAdapterAbi, functionName: "getSigners" },
           { address: adapter, abi: cpiReportAdapterAbi, functionName: "lastSubmittedTimestamp" },
+          { address: adapter, abi: cpiReportAdapterAbi, functionName: "lastSubmittedCPI" },
         ] as const)
       : [],
     query: { enabled: adapter !== undefined, refetchInterval: 30_000 },
@@ -39,6 +40,7 @@ export function useCpiAdapter() {
     signerCount: get<bigint>(4),
     signers: get<Address[]>(5),
     lastSubmittedTimestamp: get<bigint>(6),
+    lastSubmittedCPI: get<bigint>(7),
     isLoading: adapter !== undefined && (isLoading || data === undefined),
     isError: isError || readFailed,
     error: error ?? (readFailed ? partialReadError() : undefined),

@@ -18,14 +18,15 @@ it — that's exactly the kind of tribal knowledge this file is for.
 The planning docs describe the 6,000,000 HLC team allocation and 4,000,000 HLC treasury
 allocation as if they simply exist from deployment (see `docs/TECHNICAL-DOCS.md`'s DAO
 constructor walkthrough, which doesn't mention a separate mint step). The actual
-[`HalalToken`](../contracts/src/HalalToken.sol) constructor mints nothing — it only grants
-`DEFAULT_ADMIN_ROLE` and `MINTER_ROLE` to the deployer-controlled `admin` address:
+[`HalalToken`](../contracts/src/HalalToken.sol) constructor mints nothing — it grants only
+`DEFAULT_ADMIN_ROLE` to the deployer-controlled `admin` address. The deployer is deliberately not
+a minter; the deployment script grants `MINTER_ROLE` directly to the PSM before relinquishing
+admin control:
 
 ```solidity
 constructor(address admin) ERC20("Halal", "HLC") ERC20Permit("Halal") {
     if (admin == address(0)) revert ZeroAddress();
     _grantRole(DEFAULT_ADMIN_ROLE, admin);
-    _grantRole(MINTER_ROLE, admin);
 }
 ```
 

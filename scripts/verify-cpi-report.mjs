@@ -119,6 +119,13 @@ export function validateAdapterSignerSet({ threshold, signerCount, onChainSigner
   return normalized;
 }
 
+export function requirePositiveSignatureVerification(output, index) {
+  const normalized = output.trim();
+  if (!/^Validation succeeded\. Address 0x[0-9a-fA-F]{40} signed this message\.$/.test(normalized)) {
+    throw new Error(`signature ${index} failed verification`);
+  }
+}
+
 /**
  * Checks the report against the live timestamp state that the adapter and PSM will enforce.
  * Keeping this pure makes the safety boundary testable without a wallet or an RPC process.
@@ -127,23 +134,30 @@ export function validateReportState({
   typedData,
   now,
   adapterLastSubmittedTimestamp,
+  adapterLastSubmittedCPI,
   psmLastReportTimestamp,
+  psmCPI,
   psmMaxReportAge,
 }) {
   const reportedAt = BigInt(typedData.message.reportedAt);
   const nowValue = BigInt(now);
   const adapterWatermark = BigInt(adapterLastSubmittedTimestamp);
+  const adapterCPI = BigInt(adapterLastSubmittedCPI);
   const psmWatermark = BigInt(psmLastReportTimestamp);
+  const psmCPIValue = BigInt(psmCPI);
   const maxReportAge = BigInt(psmMaxReportAge);
   if (reportedAt > nowValue) throw new Error("report timestamp is in the future for the live RPC");
   if (nowValue - reportedAt > maxReportAge) throw new Error("report is older than the PSM freshness window");
   if (reportedAt <= adapterWatermark) throw new Error("report timestamp does not advance the adapter watermark");
   if (reportedAt <= psmWatermark) throw new Error("report timestamp does not advance the PSM watermark");
+  if (adapterCPI !== psmCPIValue) throw new Error("adapter and PSM CPI rates diverge");
   return {
     reportedAt: reportedAt.toString(),
     checkedAt: nowValue.toString(),
     adapterPreviousReportTimestamp: adapterWatermark.toString(),
+    adapterPreviousCPI: adapterCPI.toString(),
     psmPreviousReportTimestamp: psmWatermark.toString(),
+    psmCPI: psmCPIValue.toString(),
     maxReportAge: maxReportAge.toString(),
   };
 }
@@ -175,8 +189,17 @@ export function verifyReport({ typedDataPath, rpcUrl, adapter, signerValues, sig
       "adapter report watermark",
     ),
   );
+  const adapterLastSubmittedCPI = BigInt(
+    firstCastValue(
+      runCast(["call", normalizedAdapter, "lastSubmittedCPI()(uint256)", "--rpc-url", rpcUrl], castCommand),
+      "adapter submitted CPI",
+    ),
+  );
   const psmLastReportTimestamp = BigInt(
     firstCastValue(runCast(["call", psm, "lastReportTimestamp()(uint256)", "--rpc-url", rpcUrl], castCommand), "PSM report watermark"),
+  );
+  const psmCPI = BigInt(
+    firstCastValue(runCast(["call", psm, "cpiRate()(uint256)", "--rpc-url", rpcUrl], castCommand), "PSM CPI rate"),
   );
   const psmMaxReportAge = BigInt(
     firstCastValue(runCast(["call", psm, "MAX_REPORT_AGE()(uint256)", "--rpc-url", rpcUrl], castCommand), "PSM report age"),
@@ -188,7 +211,9 @@ export function verifyReport({ typedDataPath, rpcUrl, adapter, signerValues, sig
     typedData,
     now: checkedAt,
     adapterLastSubmittedTimestamp,
+    adapterLastSubmittedCPI,
     psmLastReportTimestamp,
+    psmCPI,
     psmMaxReportAge,
   });
   const threshold = BigInt(
@@ -209,7 +234,7 @@ export function verifyReport({ typedDataPath, rpcUrl, adapter, signerValues, sig
       ["wallet", "verify", "--data", "--from-file", typedDataPath, "--address", signers[index], signatures[index]],
       castCommand,
     );
-    if (!result) throw new Error(`signature ${index} returned no verification result`);
+    requirePositiveSignatureVerification(result, index);
   }
   return {
     status: "verified",
