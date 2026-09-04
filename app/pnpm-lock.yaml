@@ -6,6 +6,7 @@ settings:
 
 overrides:
   axios: '>=1.18.0'
+  decode-uri-component: 0.5.0
   hono: 4.12.34
   nanoid: '>=3.3.18'
   uuid: '>=11.1.1'
@@ -1711,8 +1712,8 @@ packages:
     peerDependencies:
       axios: '>=1.18.0'
 
-  axios@1.19.0:
-    resolution: {integrity: sha512-ht/iuYZXEjFxLH/Hkezgd7m6JKlHHXEUSneaDz8uZe1Gj5QZtCnpyDsckvAiEnT89OEbCLmnte4R4sn7P0EKFw==}
+  axios@1.20.0:
+    resolution: {integrity: sha512-r8aOh8j9cGKpgQAqpzrUHnSIc6a59Y3Xf/cv8sy1DrHCkZHzQGEuoq1tARk6qSyDdtQGSDgpb9kFlruzPvrgwg==}
 
   axobject-query@4.1.0:
     resolution: {integrity: sha512-qIj0G9wZbMGNLjLmg1PT6v2mE9AH2zlnADJD/2tC6E00hgmhUOfEB6greHPAfLRSufHqROIUTkw6E+M3lH0PTQ==}
@@ -1940,9 +1941,9 @@ packages:
     resolution: {integrity: sha512-z2S+W9X73hAUUki+N+9Za2lBlun89zigOyGrsax+KUQ6wKW4ZoWpEYBkGhQjwAjjDCkWxhY0VKEhk8wzY7F5cA==}
     engines: {node: '>=0.10.0'}
 
-  decode-uri-component@0.2.2:
-    resolution: {integrity: sha512-FqUYQ+8o158GyGTrMFJms9qh3CqTKvAqgqsTnkLI8sKu0028orqBhxNMFkFen0zGyg6epACD32pjVk58ngIErQ==}
-    engines: {node: '>=0.10'}
+  decode-uri-component@0.5.0:
+    resolution: {integrity: sha512-1BiQVoK8C9gUbQU6NzAtO/tkz2qOFpEObMWpcFvhx4fYnj4Oc5yzaJN/LD36ihkVUdXyh5ZekzX+yM+ty/SrPg==}
+    engines: {node: '>=14.16'}
 
   dedent@1.7.2:
     resolution: {integrity: sha512-WzMx3mW98SN+zn3hgemf4OzdmyNhhhKz5Ay0pUfQiMQ3e1g+xmTJWp/pKdwKVXhdSkAEGIIzqeuWrL3mV/AXbA==}
@@ -4055,8 +4056,8 @@ snapshots:
       '@solana-program/token': 0.9.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10))
       '@solana/kit': 5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)
       abitype: 1.0.6(typescript@5.9.3)(zod@3.25.76)
-      axios: 1.19.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
-      axios-retry: 4.5.0(axios@1.19.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0))
+      axios: 1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
+      axios-retry: 4.5.0(axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0))
       bs58: 6.0.0
       jose: 6.2.7
       md5: 2.3.0
@@ -6471,12 +6472,12 @@ snapshots:
 
   axe-core@4.13.0: {}
 
-  axios-retry@4.5.0(axios@1.19.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)):
+  axios-retry@4.5.0(axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)):
     dependencies:
-      axios: 1.19.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
+      axios: 1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0)
       is-retry-allowed: 2.2.0
 
-  axios@1.19.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0):
+  axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0):
     dependencies:
       follow-redirects: 1.16.0(debug@4.4.3(supports-color@7.2.0))
       form-data: 4.0.6
@@ -6690,7 +6691,7 @@ snapshots:
 
   decamelize@1.2.0: {}
 
-  decode-uri-component@0.2.2: {}
+  decode-uri-component@0.5.0: {}
 
   dedent@1.7.2: {}
 
@@ -8087,7 +8088,7 @@ snapshots:
 
   query-string@7.1.3:
     dependencies:
-      decode-uri-component: 0.2.2
+      decode-uri-component: 0.5.0
       filter-obj: 1.1.0
       split-on-first: 1.1.0
       strict-uri-encode: 2.0.0
