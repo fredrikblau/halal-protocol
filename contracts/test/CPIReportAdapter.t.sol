@@ -174,6 +174,15 @@ contract CPIReportAdapterTest is Test {
         bytes[] memory signatures = _signReport(1_010_000, reportedAt, SIGNER_ONE_KEY, replacementKey);
         adapter.submitReport(1_010_000, reportedAt, signatures);
         assertEq(sink.lastCPI(), 1_010_000);
+
+        vm.expectRevert(CPIReportAdapter.SignerAlreadyConfigured.selector);
+        adapter.addSigner(replacement);
+
+        address newOwner = address(0xCAFE);
+        adapter.transferOwnership(newOwner);
+        vm.prank(newOwner);
+        adapter.acceptOwnership();
+        assertEq(adapter.owner(), newOwner);
     }
 
     function test_RevertWhen_ConstructorSignerIsOwner() public {
