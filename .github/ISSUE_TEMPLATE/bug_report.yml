@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Please do not disclose security vulnerabilities publicly. Follow [SECURITY.md](../../SECURITY.md) instead.
+        Please do not disclose security vulnerabilities publicly. Read [SECURITY.md](https://github.com/fredrikblau/halal-protocol/blob/main/SECURITY.md) and use the [private advisory form](https://github.com/fredrikblau/halal-protocol/security/advisories/new) instead.
   - type: textarea
     id: summary
     attributes:
@@ -36,5 +36,5 @@ body:
     attributes:
       label: Safe public report
       options:
-        - label: I confirm this is not a suspected security vulnerability; I will use [`SECURITY.md`](../../SECURITY.md) for fund-risking or access-control concerns.
+        - label: I confirm this is not a suspected security vulnerability; I will use [SECURITY.md](https://github.com/fredrikblau/halal-protocol/blob/main/SECURITY.md) and the private advisory form for fund-risking or access-control concerns.
           required: true
