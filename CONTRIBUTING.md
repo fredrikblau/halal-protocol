@@ -20,7 +20,24 @@ bar than a typical app repo — see the [roadmap](docs/ROADMAP.md) and [Changes 
 New to the repository? Follow the [ten-minute contributor quickstart](docs/CONTRIBUTOR-QUICKSTART.md)
 for the clean-clone tool check, disposable local smoke test, and first contribution path.
 
-1. Fork the repository and clone your fork.
+### Current starter issues
+
+These tasks are intentionally bounded and do not require a wallet, private key, RPC credential,
+deployment, or real funds:
+
+- [#118 — verify the clean-clone quickstart on another environment](https://github.com/fredrikblau/halal-protocol/issues/118)
+- [#166 — add fail-closed deployment-manifest tests](https://github.com/fredrikblau/halal-protocol/issues/166)
+- [#173 — cover CPI adapter configuration and ownership boundaries](https://github.com/fredrikblau/halal-protocol/issues/173)
+
+The CPI source-policy task is already claimed in [PR #169](https://github.com/fredrikblau/halal-protocol/pull/169).
+Review or improve that PR rather than opening a duplicate.
+
+Read the issue acceptance criteria, comment with your intended approach, and open a focused PR.
+If a task is already claimed or has an active contributor PR, choose another starter issue or
+help review the existing work instead of duplicating it.
+
+1. Fork the repository and clone your fork with `git clone --recurse-submodules`; if the clone
+   already exists, run `git submodule update --init --recursive`.
 2. Create a topic branch off `main`: `git checkout -b feat/short-description`.
 3. Make your changes, following the code style and testing expectations below.
 4. Push your branch to your fork and open a pull request against `main` on the upstream repo.
@@ -30,10 +47,15 @@ for the clean-clone tool check, disposable local smoke test, and first contribut
    satisfied.
 
 The `main` branch is protected: changes must arrive through a pull request, receive one approval
-from the code owner, pass path detection plus every applicable Contracts, Scripts, generated-ABI, and
+and, when covered by `CODEOWNERS`, approval from the listed owner. They must also pass path
+detection plus every applicable Contracts, Scripts, generated-ABI, and
 Frontend CI check, use linear history, and resolve review conversations. Path-filtered jobs are
 skipped safely for unrelated documentation changes. Administrators may bypass the rule for repository
 recovery, but normal development should use the review path.
+
+`CODEOWNERS` requests maintainer review for deployed Solidity, deployment scripts, repository
+scripts, and GitHub Actions. Documentation, frontend, and test-only changes are intentionally open
+to outside reviewers; the branch still requires one approval and all applicable checks.
 
 The protected checks also include Slither static analysis, extended fuzzing/invariants, and both
 CodeQL language analyses. Dependency review and OpenSSF Scorecard remain visible advisory workflows;
@@ -68,7 +90,7 @@ The contracts are a [Foundry](https://book.getfoundry.sh/) project.
 cd contracts
 forge install      # pulls in the git-submodule dependencies (forge-std, OpenZeppelin)
 forge build
-forge test         # full 199-test suite, including 11 stateful invariants
+forge test         # full 197-test suite, including 13 stateful invariants
 forge test -vvv    # verbose, useful when a test fails
 forge fmt --check src test script  # verify first-party formatting without rewriting dependencies
 forge fmt           # actually reformat
@@ -126,8 +148,8 @@ combination means bugs here are unusually expensive to get wrong. So, for any PR
 - **Discuss significant changes in an issue first.** "Significant" means anything beyond a
   comment/NatSpec fix or an obviously-safe typo — if in doubt, open the issue.
 - **Tests are not optional.** New behavior needs new tests; changed behavior needs updated
-tests demonstrating the change is correct. `contracts/test/` currently passes 199/199 (188
-  ordinary tests plus 11 stateful invariants) — a PR that
+tests demonstrating the change is correct. `contracts/test/` currently passes 197/197 (184
+  unit/configuration tests plus 13 stateful invariants) — a PR that
   drops that number, or that changes contract behavior without a corresponding test change, will
   need justification before it can be merged.
 - **Explain the "why," not just the "what."** For contract changes especially, reviewers need to

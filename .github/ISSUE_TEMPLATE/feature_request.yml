@@ -29,5 +29,5 @@ body:
     attributes:
       label: Safe public proposal
       options:
-        - label: I confirm this is a public design request, not a report of a suspected vulnerability or a request to disclose exploit details.
+        - label: I confirm this is a public design request, not a report of a suspected vulnerability or a request to disclose exploit details; I will use [SECURITY.md](https://github.com/fredrikblau/halal-protocol/blob/main/SECURITY.md) and the private advisory form for security concerns.
           required: true
