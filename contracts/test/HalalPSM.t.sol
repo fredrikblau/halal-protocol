@@ -614,6 +614,53 @@ contract HalalPSMTest is Deployers {
         vm.stopPrank();
 
         assertEq(falseReserve.balanceOf(address(falsePsm)), 0);
+
+        MockFeeOnTransferERC20 zeroReceiptReserve = new MockFeeOnTransferERC20(10_000);
+        HalalPSM zeroReceiptPsm =
+            new HalalPSM(address(zeroReceiptReserve), address(token), address(timelock), address(0));
+        _grantPsmTokenRoles(zeroReceiptPsm);
+        _bootstrapPsm(zeroReceiptPsm);
+        zeroReceiptReserve.mint(alice, 1e18);
+
+        vm.startPrank(alice);
+        zeroReceiptReserve.approve(address(zeroReceiptPsm), 1e18);
+        vm.expectRevert(HalalPSM.ZeroReceived.selector);
+        zeroReceiptPsm.deposit(1e18);
+        vm.stopPrank();
+
+        assertEq(zeroReceiptReserve.balanceOf(address(zeroReceiptPsm)), 0);
+
+        MockFeeOnTransferERC20 zeroPayoutReserve = new MockFeeOnTransferERC20(0);
+        HalalPSM zeroPayoutPsm = new HalalPSM(address(zeroPayoutReserve), address(token), address(timelock), address(0));
+        _grantPsmTokenRoles(zeroPayoutPsm);
+        _bootstrapPsm(zeroPayoutPsm);
+        zeroPayoutReserve.mint(alice, 1e18);
+
+        vm.startPrank(alice);
+        zeroPayoutReserve.approve(address(zeroPayoutPsm), 1e18);
+        zeroPayoutPsm.deposit(1e18);
+        token.approve(address(zeroPayoutPsm), 1e18);
+        vm.stopPrank();
+
+        zeroPayoutReserve.setFeeBps(10_000);
+        vm.startPrank(alice);
+        vm.expectRevert(HalalPSM.ZeroReceived.selector);
+        zeroPayoutPsm.withdraw(1e18);
+        vm.stopPrank();
+
+        assertEq(zeroPayoutPsm.totalHlcIssued(), 1e18);
+        assertEq(zeroPayoutPsm.redeemableBalance(alice), 1e18);
+
+        MockFeeOnTransferERC20 zeroAdminPayoutReserve = new MockFeeOnTransferERC20(10_000);
+        HalalPSM zeroAdminPayoutPsm =
+            new HalalPSM(address(zeroAdminPayoutReserve), address(token), address(timelock), address(0));
+        zeroAdminPayoutReserve.mint(address(zeroAdminPayoutPsm), 1e18);
+
+        vm.prank(address(timelock));
+        vm.expectRevert(HalalPSM.ZeroReceived.selector);
+        zeroAdminPayoutPsm.withdrawReserve(address(this), 1e18);
+
+        assertEq(zeroAdminPayoutReserve.balanceOf(address(zeroAdminPayoutPsm)), 1e18);
     }
 
     function test_SupportsReserveTokenWithNoTransferReturnData() public {
@@ -1021,6 +1068,20 @@ contract HalalPSMTest is Deployers {
         psm.withdraw(400e18);
         vm.stopPrank();
         assertEq(psm.redeemableBalance(bob), 0);
+
+        vm.startPrank(alice);
+        vm.expectRevert(HalalPSM.ZeroAddress.selector);
+        psm.transferRedeemable(address(0), 1);
+        vm.expectRevert(HalalPSM.ZeroAmount.selector);
+        psm.transferRedeemable(bob, 0);
+        vm.expectRevert(HalalPSM.InsufficientRedeemableBalance.selector);
+        psm.transferRedeemable(bob, 601e18);
+        vm.stopPrank();
+
+        assertEq(token.balanceOf(alice), 600e18);
+        assertEq(token.balanceOf(bob), 0);
+        assertEq(psm.redeemableBalance(alice), 600e18);
+        assertEq(psm.redeemableBalance(bob), 0);
     }
 
     function test_TransferredCreditCannotUnlockRecipientGenesisBalance() public {
@@ -1111,6 +1172,50 @@ contract HalalPSMTest is Deployers {
         assertEq(token.balanceOf(recipient), amount);
         assertEq(psm.redeemableBalance(permitAlice), 60e18);
         assertEq(psm.redeemableBalance(recipient), amount);
+
+        _assertPermitTransferRejectsZeroRecipient();
+        _assertPermitTransferRejectsZeroAmount();
+    }
+
+    function _assertPermitTransferRejectsZeroRecipient() internal {
+        (address permitAlice, uint256 permitAliceKey) = makeAddrAndKey("permitZeroRecipient");
+        reserve.mint(permitAlice, 100e18);
+        vm.startPrank(permitAlice);
+        reserve.approve(address(psm), 100e18);
+        psm.deposit(100e18);
+        vm.stopPrank();
+
+        uint256 amount = 40e18;
+        uint256 deadline = block.timestamp + 1 hours;
+        (uint8 v, bytes32 r, bytes32 s) =
+            _permitSignature(address(token), permitAlice, address(psm), amount, deadline, permitAliceKey);
+
+        vm.prank(permitAlice);
+        vm.expectRevert(HalalPSM.ZeroAddress.selector);
+        psm.transferRedeemableWithPermit(address(0), amount, deadline, v, r, s);
+
+        assertEq(psm.redeemableBalance(permitAlice), 100e18);
+        assertEq(token.nonces(permitAlice), 0);
+    }
+
+    function _assertPermitTransferRejectsZeroAmount() internal {
+        (address permitAlice, uint256 permitAliceKey) = makeAddrAndKey("permitZeroAmount");
+        reserve.mint(permitAlice, 100e18);
+        vm.startPrank(permitAlice);
+        reserve.approve(address(psm), 100e18);
+        psm.deposit(100e18);
+        vm.stopPrank();
+
+        uint256 deadline = block.timestamp + 1 hours;
+        (uint8 v, bytes32 r, bytes32 s) =
+            _permitSignature(address(token), permitAlice, address(psm), 0, deadline, permitAliceKey);
+
+        vm.prank(permitAlice);
+        vm.expectRevert(HalalPSM.ZeroAmount.selector);
+        psm.transferRedeemableWithPermit(makeAddr("permitNonZeroRecipient"), 0, deadline, v, r, s);
+
+        assertEq(psm.redeemableBalance(permitAlice), 100e18);
+        assertEq(token.nonces(permitAlice), 0);
     }
 
     function test_RedeemableBalanceTracksDepositsAndWithdrawals() public {
