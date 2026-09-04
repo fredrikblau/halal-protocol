@@ -27,13 +27,18 @@ contract DeployCPIReportAdapter is Script {
         uint256 threshold = vm.envUint("CPI_THRESHOLD");
         bytes32 sourceId = vm.envBytes32("CPI_SOURCE_ID");
 
-        if (
-            privateKey == 0 || expectedChainId == 0 || block.chainid != expectedChainId || !_psmIsContract(psm)
-                || owner == address(0) || owner == deployer || owner.code.length == 0
-                || !_adapterSignersAreSafe(deployer, owner, signerOne, signerTwo, signerThree) || threshold == 0
-                || sourceId == bytes32(0) || (signerThree == address(0) && threshold > 2)
-                || (signerThree != address(0) && threshold > 3)
-        ) revert InvalidConfig();
+        if (!_configIsValid(
+                privateKey,
+                expectedChainId,
+                deployer,
+                psm,
+                owner,
+                signerOne,
+                signerTwo,
+                signerThree,
+                threshold,
+                sourceId
+            )) revert InvalidConfig();
 
         address[] memory signers = new address[](signerThree == address(0) ? 2 : 3);
         signers[0] = signerOne;
@@ -53,6 +58,25 @@ contract DeployCPIReportAdapter is Script {
         if (signerThree != address(0)) console.log("Signer 3:", signerThree);
         console.logBytes32(sourceId);
         console.log("Grant UPDATER_ROLE to the adapter only after governance review.");
+    }
+
+    function _configIsValid(
+        uint256 privateKey,
+        uint256 expectedChainId,
+        address deployer,
+        address psm_,
+        address owner_,
+        address signerOne,
+        address signerTwo,
+        address signerThree,
+        uint256 threshold_,
+        bytes32 sourceId_
+    ) internal view returns (bool) {
+        return privateKey != 0 && expectedChainId != 0 && block.chainid == expectedChainId && _psmIsContract(psm_)
+            && owner_ != address(0) && owner_ != deployer && owner_.code.length > 0
+            && _adapterSignersAreSafe(deployer, owner_, signerOne, signerTwo, signerThree) && threshold_ != 0
+            && sourceId_ != bytes32(0) && (signerThree != address(0) || threshold_ <= 2)
+            && (signerThree == address(0) || threshold_ <= 3);
     }
 
     function _psmIsContract(address psm) internal view returns (bool) {
