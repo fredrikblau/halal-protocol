@@ -57,6 +57,9 @@ case "$1" in
       'sourceId()('* ) echo ${SOURCE_ID} ;;
       'source()('* ) echo '"BLS:CUUR0000SA0"' ;;
       'lastSubmittedTimestamp()('* ) echo "\${FAKE_ADAPTER_WATERMARK:-0}" ;;
+      'lastSubmittedCPI()('* ) echo "\${FAKE_ADAPTER_CPI:-1000000}" ;;
+      'cpiRate()('* )
+        if [[ "$target" == "${ADDRESSES.psm}" ]]; then echo "\${FAKE_PSM_CPI:-1000000}"; else echo "unexpected cpiRate target" >&2; exit 1; fi ;;
       'lastReportTimestamp()('* ) echo "\${FAKE_PSM_WATERMARK:-0}" ;;
       'threshold()('* ) echo "\${FAKE_ADAPTER_THRESHOLD:-2}" ;;
       'signerCount()('* ) echo "\${FAKE_ADAPTER_SIGNER_COUNT:-2}" ;;
@@ -114,6 +117,12 @@ test("deployment verifier rejects mismatched CPI adapter and PSM watermarks", ()
   const result = runVerifier(true, { FAKE_ADAPTER_WATERMARK: "10", FAKE_PSM_WATERMARK: "9" });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /CPI adapter report watermark/);
+});
+
+test("deployment verifier rejects mismatched CPI adapter and PSM rates", () => {
+  const result = runVerifier(true, { FAKE_ADAPTER_CPI: "1000001", FAKE_PSM_CPI: "1000000" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /CPI adapter submitted rate/);
 });
 
 test("deployment verifier rejects an oversized CPI adapter signer count", () => {

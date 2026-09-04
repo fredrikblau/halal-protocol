@@ -81,14 +81,18 @@ test("preflights the live adapter and PSM report watermarks", () => {
       typedData,
       now: "1780001000",
       adapterLastSubmittedTimestamp: "0",
+      adapterLastSubmittedCPI: "0",
       psmLastReportTimestamp: "0",
+      psmCPI: "0",
       psmMaxReportAge: "7776000",
     }),
     {
       reportedAt: "1780000000",
       checkedAt: "1780001000",
       adapterPreviousReportTimestamp: "0",
+      adapterPreviousCPI: "0",
       psmPreviousReportTimestamp: "0",
+      psmCPI: "0",
       maxReportAge: "7776000",
     },
   );
@@ -98,12 +102,15 @@ test("rejects stale, replayed, and future reports before signature recovery", ()
   const base = {
     now: "1780001000",
     adapterLastSubmittedTimestamp: "0",
+    adapterLastSubmittedCPI: "0",
     psmLastReportTimestamp: "0",
+    psmCPI: "0",
     psmMaxReportAge: "7776000",
   };
   assert.throws(() => validateReportState({ typedData, ...base, now: "1787776001" }), /older than/);
   assert.throws(() => validateReportState({ typedData, ...base, adapterLastSubmittedTimestamp: "1780000000" }), /adapter watermark/);
   assert.throws(() => validateReportState({ typedData, ...base, psmLastReportTimestamp: "1780000000" }), /PSM watermark/);
+  assert.throws(() => validateReportState({ typedData, ...base, adapterLastSubmittedCPI: "1" }), /CPI rates diverge/);
   assert.throws(
     () => validateReportState({ typedData, ...base, now: "1779999999" }),
     /future for the live RPC/,

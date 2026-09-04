@@ -78,7 +78,7 @@ conservative accounting model:
 
 | Reviewer question | Evidence in this repository |
 | --- | --- |
-| Does the accounting have stateful coverage? | 196 Foundry tests, including 13 PSM invariants, differential arithmetic checks, and fuzzing |
+| Does the accounting have stateful coverage? | 197 Foundry tests, including 13 PSM invariants, differential arithmetic checks, and fuzzing |
 | Do invariants cover CPI changes? | [`docs/INVARIANTS.md`](docs/INVARIANTS.md) models governance rate changes and reserve top-ups |
 | Can a deployment be checked without a private key? | [`scripts/verify-deployment.sh`](scripts/verify-deployment.sh) |
 | Can registry readiness be checked offline? | [`scripts/preflight-deployment.mjs`](scripts/preflight-deployment.mjs) or `make deployment-preflight` (no RPC, signing, or writes) |
@@ -88,11 +88,11 @@ conservative accounting model:
 | Can an operator audit a deployment without a wallet? | [`scripts/check-deployment-health.sh`](scripts/check-deployment-health.sh) combines wiring and PSM health checks |
 | Can I model CPI-driven reserve needs reproducibly? | [`docs/ECONOMIC-MODEL.md`](docs/ECONOMIC-MODEL.md) and `make economic-model` |
 | Can I reproduce an official CPI report payload? | [`scripts/parse-bls-cpi.mjs`](scripts/parse-bls-cpi.mjs) and [`docs/CPI-ADAPTER-SPEC.md`](docs/CPI-ADAPTER-SPEC.md) |
-| Can I verify a report before submitting it? | [`scripts/verify-cpi-report.mjs`](scripts/verify-cpi-report.mjs) checks live adapter/PSM watermarks and freshness, then recovers each EIP-712 signer without private keys |
+| Can I verify a report before submitting it? | [`scripts/verify-cpi-report.mjs`](scripts/verify-cpi-report.mjs) checks live adapter/PSM CPI state, watermarks, and freshness, then recovers each EIP-712 signer without private keys |
 | Does governance decode CPI adapter actions? | The dApp includes the generated `CPIReportAdapter` ABI for signer, threshold, ownership, and report actions |
 | Can the active CPI signer set be audited? | `CPIReportAdapter.getSigners()` and `check-psm-health.sh` expose the current addresses after each rotation |
 | Does the dApp show adapter custody state? | The dashboard and PSM page show the live adapter owner, source ID, quorum, signers, and last submitted report |
-| Does the dApp verify adapter/PSM report alignment? | It compares the adapter watermark with the PSM's accepted-report watermark and flags divergence |
+| Does the dApp verify adapter/PSM report alignment? | It compares the adapter's submitted CPI and report watermark with the PSM and flags divergence |
 | Can an operator inspect deployment health without a wallet? | The read-only [`/health` page](https://github.com/fredrikblau/halal-protocol/tree/main/app/src/app/health) checks contract wiring, CPI freshness, reserve coverage, and adapter alignment |
 | Does the dApp expose deployment evidence? | The dashboard shows the registry's deployment transaction, verified-source, and deployment-journal links when they are published |
 | Can I inspect the CPI timeline? | The dashboard reads recent `CPIUpdated` events with block, transaction, source, and rate-change context |
@@ -117,7 +117,7 @@ discipline, not a safety guarantee.
 ## Status & risk
 
 **This protocol has not undergone a professional security audit, and there is no bug bounty
-program yet.** The contracts pass their own test suite (196/196 at the time of writing — 183 unit
+program yet.** The contracts pass their own test suite (197/197 at the time of writing — 184 unit
 and configuration tests plus 13 stateful invariants; see
 `contracts/test/`), but a passing test suite is not a substitute for an audit, and this repo
 should not be treated as safe to use with real, meaningful funds. If you deploy or interact with
