@@ -5,7 +5,7 @@
 [![Slither](https://github.com/fredrikblau/halal-protocol/actions/workflows/slither.yml/badge.svg)](https://github.com/fredrikblau/halal-protocol/actions/workflows/slither.yml)
 [![Deep contract tests](https://github.com/fredrikblau/halal-protocol/actions/workflows/deep-tests.yml/badge.svg)](https://github.com/fredrikblau/halal-protocol/actions/workflows/deep-tests.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/fredrikblau/halal-protocol/badge)](https://securityscorecards.dev/viewer/?uri=github.com/fredrikblau/halal-protocol)
-[![Latest release](https://img.shields.io/github/v/release/fredrikblau/halal-protocol?include_prereleases&label=latest%20release)](https://github.com/fredrikblau/halal-protocol/releases)
+[![Latest preview](https://img.shields.io/github/v/release/fredrikblau/halal-protocol?include_prereleases&label=latest%20preview)](https://github.com/fredrikblau/halal-protocol/releases)
 [![GitHub stars](https://img.shields.io/github/stars/fredrikblau/halal-protocol?style=social)](https://github.com/fredrikblau/halal-protocol/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/fredrikblau/halal-protocol?style=social)](https://github.com/fredrikblau/halal-protocol/network/members)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -27,6 +27,9 @@ Anvil chain, deploys the wired contracts, seeds a fresh local CPI report, and op
 with a faucet-backed local reserve.
 No external RPC key or real funds are needed for the demo.
 
+If the protocol idea or the engineering work is useful to you, consider [starring the repository](https://github.com/fredrikblau/halal-protocol/stargazers)
+and [forking it](https://github.com/fredrikblau/halal-protocol/forks) to experiment or contribute.
+
 ## Contribute
 
 Start with the [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22):
@@ -35,13 +38,22 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
 - Follow the [local development walkthrough](docs/LOCAL-DEVELOPMENT.md) from a clean checkout.
 - Use the [local-demo troubleshooting guide](docs/LOCAL-DEMO-TROUBLESHOOTING.md) if a prerequisite,
   port, or stale local configuration blocks the demo.
+- Review the [proposed CPI source-policy record](docs/CPI-SOURCE-POLICY-BLS-DRAFT.md) (based on the
+  [template](docs/CPI-SOURCE-POLICY-TEMPLATE.md)) documenting the reporting trust boundary:
+  source series, publisher identity, cadence, freshness, fallback, updater custody, and
+  incident response. This record is a proposal under review, not production approval.
 - Run `make verify` before opening a pull request.
-- Pick a bounded task from the [open good-first-issue list](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22),
-  such as [deployment-manifest source-label testing](https://github.com/fredrikblau/halal-protocol/issues/100),
-  [CPI source policy documentation](https://github.com/fredrikblau/halal-protocol/issues/80), or
-  [accessibility smoke coverage](https://github.com/fredrikblau/halal-protocol/issues/102).
-- Improve the dApp's inclusive, fail-closed states with the
-  [accessibility smoke-coverage issue](https://github.com/fredrikblau/halal-protocol/issues/102).
+- Pick one of the three currently unclaimed [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22):
+  [clean-clone verification on another environment](https://github.com/fredrikblau/halal-protocol/issues/118) or
+  [fail-closed deployment-manifest tests](https://github.com/fredrikblau/halal-protocol/issues/166), or
+  [CPI adapter configuration and ownership tests](https://github.com/fredrikblau/halal-protocol/issues/173).
+  The CPI source-policy task is already claimed in [contributor PR #169](https://github.com/fredrikblau/halal-protocol/pull/169);
+  review or improve that PR instead of opening a duplicate.
+- Review the contributor's [protocol glossary PR](https://github.com/fredrikblau/halal-protocol/pull/147)
+  and verify its terminology against the current contracts and implementation.
+- Review or extend the contributor-owned [accessibility smoke-coverage PR](https://github.com/fredrikblau/halal-protocol/pull/107)
+  and its [tracking issue](https://github.com/fredrikblau/halal-protocol/issues/102); do not duplicate the
+  implementation unless the PR's author or maintainers request it.
 - Help coordinate the first carefully gated [Arbitrum Sepolia deployment](https://github.com/fredrikblau/halal-protocol/issues/40).
 - Review the bounded [security challenge](https://github.com/fredrikblau/halal-protocol/issues/16) or
   [production CPI adapter design](https://github.com/fredrikblau/halal-protocol/issues/17).
@@ -66,7 +78,7 @@ conservative accounting model:
 
 | Reviewer question | Evidence in this repository |
 | --- | --- |
-| Does the accounting have stateful coverage? | 200 Foundry tests, including 16 PSM invariants, differential arithmetic checks, and fuzzing |
+| Does the accounting have stateful coverage? | 197 Foundry tests, including 13 PSM invariants, differential arithmetic checks, and fuzzing |
 | Do invariants cover CPI changes? | [`docs/INVARIANTS.md`](docs/INVARIANTS.md) models governance rate changes and reserve top-ups |
 | Can a deployment be checked without a private key? | [`scripts/verify-deployment.sh`](scripts/verify-deployment.sh) |
 | Can registry readiness be checked offline? | [`scripts/preflight-deployment.mjs`](scripts/preflight-deployment.mjs) or `make deployment-preflight` (no RPC, signing, or writes) |
@@ -76,11 +88,11 @@ conservative accounting model:
 | Can an operator audit a deployment without a wallet? | [`scripts/check-deployment-health.sh`](scripts/check-deployment-health.sh) combines wiring and PSM health checks |
 | Can I model CPI-driven reserve needs reproducibly? | [`docs/ECONOMIC-MODEL.md`](docs/ECONOMIC-MODEL.md) and `make economic-model` |
 | Can I reproduce an official CPI report payload? | [`scripts/parse-bls-cpi.mjs`](scripts/parse-bls-cpi.mjs) and [`docs/CPI-ADAPTER-SPEC.md`](docs/CPI-ADAPTER-SPEC.md) |
-| Can I verify a report before submitting it? | [`scripts/verify-cpi-report.mjs`](scripts/verify-cpi-report.mjs) checks live adapter/PSM watermarks and freshness, then recovers each EIP-712 signer without private keys |
+| Can I verify a report before submitting it? | [`scripts/verify-cpi-report.mjs`](scripts/verify-cpi-report.mjs) checks live adapter/PSM CPI state, watermarks, and freshness, then recovers each EIP-712 signer without private keys |
 | Does governance decode CPI adapter actions? | The dApp includes the generated `CPIReportAdapter` ABI for signer, threshold, ownership, and report actions |
 | Can the active CPI signer set be audited? | `CPIReportAdapter.getSigners()` and `check-psm-health.sh` expose the current addresses after each rotation |
 | Does the dApp show adapter custody state? | The dashboard and PSM page show the live adapter owner, source ID, quorum, signers, and last submitted report |
-| Does the dApp verify adapter/PSM report alignment? | It compares the adapter watermark with the PSM's accepted-report watermark and flags divergence |
+| Does the dApp verify adapter/PSM report alignment? | It compares the adapter's submitted CPI and report watermark with the PSM and flags divergence |
 | Can an operator inspect deployment health without a wallet? | The read-only [`/health` page](https://github.com/fredrikblau/halal-protocol/tree/main/app/src/app/health) checks contract wiring, CPI freshness, reserve coverage, and adapter alignment |
 | Does the dApp expose deployment evidence? | The dashboard shows the registry's deployment transaction, verified-source, and deployment-journal links when they are published |
 | Can I inspect the CPI timeline? | The dashboard reads recent `CPIUpdated` events with block, transaction, source, and rate-change context |
@@ -105,8 +117,8 @@ discipline, not a safety guarantee.
 ## Status & risk
 
 **This protocol has not undergone a professional security audit, and there is no bug bounty
-program yet.** The contracts pass their own test suite (200/200 at the time of writing — 184 unit
-and configuration tests plus 16 stateful invariants; see
+program yet.** The contracts pass their own test suite (197/197 at the time of writing — 184 unit
+and configuration tests plus 13 stateful invariants; see
 `contracts/test/`), but a passing test suite is not a substitute for an audit, and this repo
 should not be treated as safe to use with real, meaningful funds. If you deploy or interact with
 any instance of these contracts, you do so at your own risk. See [`SECURITY.md`](SECURITY.md) for
@@ -152,6 +164,8 @@ walkthrough, and the exact API surface — see:
   number or behavior described in the docs above is exactly what the code does.
 - [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md) — assets, trust boundaries, attack scenarios,
   mitigations, and unresolved risks for reviewers and deployment operators.
+- [`docs/SECURITY-REVIEW-QUICKSTART.md`](docs/SECURITY-REVIEW-QUICKSTART.md) — reproducible
+  security-review commands, bounded review questions, evidence expectations, and safe reporting.
 - [`docs/OPERATOR-RUNBOOK.md`](docs/OPERATOR-RUNBOOK.md) — launch acceptance, monitoring, CPI
   updater operations, governance review, and incident response.
 - [`scripts/verify-governance-payload.mjs`](scripts/verify-governance-payload.mjs) — offline,
@@ -168,6 +182,8 @@ walkthrough, and the exact API surface — see:
   worksheet for operational failures and recovery evidence.
 - [`docs/CONTRIBUTOR-MAP.md`](docs/CONTRIBUTOR-MAP.md) — concrete contribution paths for security,
   oracle integrations, monitoring, economics, governance, dApp UX, and documentation.
+- [`docs/GLOSSARY.md`](docs/GLOSSARY.md) — concise definitions of the protocol terms used by the
+  contracts, documentation, and contributor issues.
 - [`docs/LOCAL-CPI-REPORT-WALKTHROUGH.md`](docs/LOCAL-CPI-REPORT-WALKTHROUGH.md) — copy-paste local
   CPI report preparation and verification lifecycle.
 - [Security review challenge #16](https://github.com/fredrikblau/halal-protocol/issues/16) — a bounded
