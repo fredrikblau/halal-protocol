@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { validateAdapterSignerSet, validateReportState, validateSignatureSet, validateTypedData } from "../verify-cpi-report.mjs";
+import { requirePositiveSignatureVerification, validateAdapterSignerSet, validateReportState, validateSignatureSet, validateTypedData } from "../verify-cpi-report.mjs";
 
 const signerOne = "0x1111111111111111111111111111111111111111";
 const signerTwo = "0x2222222222222222222222222222222222222222";
@@ -58,6 +58,12 @@ test("requires the adapter signer count to match its enumerated signer set", () 
     () => validateAdapterSignerSet({ threshold: "2", signerCount: "2", onChainSigners: [signerOne, signerOne] }),
     /duplicates/,
   );
+});
+
+test("requires cast signature verification to return true", () => {
+  assert.doesNotThrow(() => requirePositiveSignatureVerification("Validation succeeded. Address 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC signed this message.\n", 0));
+  assert.throws(() => requirePositiveSignatureVerification("false\n", 0), /signature 0 failed verification/);
+  assert.throws(() => requirePositiveSignatureVerification("", 1), /signature 1 failed verification/);
 });
 
 test("rejects a typed data file for another domain", () => {
