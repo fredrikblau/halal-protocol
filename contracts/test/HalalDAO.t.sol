@@ -52,6 +52,7 @@ contract HalalDAOTest is Deployers {
     function test_Quorum() public view {
         assertEq(dao.quorumNumerator(), 4);
         assertEq(dao.quorumDenominator(), 100);
+        assertEq(dao.quorum(block.number - 1), (token.getPastTotalSupply(block.number - 1) * 4) / 100);
     }
 
     function test_VotingDelay() public view {
@@ -64,6 +65,10 @@ contract HalalDAOTest is Deployers {
 
     function test_TimelockDelay() public view {
         assertEq(timelock.getMinDelay(), TIMELOCK_DELAY);
+    }
+
+    function test_ProposalNeedsQueuingUsesTimelockPolicy() public view {
+        assertTrue(dao.proposalNeedsQueuing(0));
     }
 
     function test_RevertWhen_DAOHasZeroToken() public {
