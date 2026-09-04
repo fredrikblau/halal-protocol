@@ -128,6 +128,10 @@ jobs:
       - name: forge test
         run: forge test --force -vvv
 
+      - name: Verify current documentation test counts
+        working-directory: .
+        run: make test-counts
+
       - name: forge lint (first-party code)
         run: forge lint src test script --severity high --severity med --severity low --severity gas
 
@@ -226,8 +230,13 @@ jobs:
     if: needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout (with submodules)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1
 
       - name: Install Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -236,6 +245,9 @@ jobs:
 
       - name: Validate Markdown links and anchors
         run: make markdown-links
+
+      - name: Verify current documentation test counts
+        run: make test-counts
 
   app:
     name: Frontend (Next.js)
