@@ -59,3 +59,8 @@ test("ignores link-shaped text inside fenced code", () => {
   const output = runFixture("# Guide\n\n```md\n[Example](missing.md)\n```\n");
   assert.match(output, /Markdown links checked/);
 });
+
+test("strips nested HTML-like tags before generating heading anchors", () => {
+  const output = runFixture("# <scr<script>ipt>alert</script>\n\n[Alert](#iptalert)\n");
+  assert.match(output, /Markdown links checked/);
+});

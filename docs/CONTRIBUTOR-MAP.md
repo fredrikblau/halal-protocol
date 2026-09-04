@@ -7,14 +7,37 @@ that another reviewer can check.
 New contributors can use the [ten-minute quickstart](CONTRIBUTOR-QUICKSTART.md) to verify a clean
 checkout before choosing an issue.
 
-The current security review scope is [issue #16](https://github.com/fredrikblau/halal-protocol/issues/16).
-Start there if you want to inspect the PSM, CPI boundaries, reserve assumptions, or governance
-operations. Report fund-risking findings through [`SECURITY.md`](../SECURITY.md), not the issue.
+Use the [protocol glossary](GLOSSARY.md) for concise definitions and links to the implementation
+of the terms used throughout this map.
 
-## Good first issues
+The current security review scope is [issue #16](https://github.com/fredrikblau/halal-protocol/issues/16).
+Start with the [security-review quickstart](SECURITY-REVIEW-QUICKSTART.md) if you want to inspect
+the PSM, CPI boundaries, reserve assumptions, or governance operations. Report fund-risking findings
+through [`SECURITY.md`](../SECURITY.md), not the issue.
+
+## Good first issues and reference paths
 
 Choose the task that matches your interests; each issue includes a bounded scope, acceptance
 criteria, and a safe local verification path:
+
+- [CPI source policy documentation (#80)](https://github.com/fredrikblau/halal-protocol/issues/80) —
+  claimed in [contributor PR #169](https://github.com/fredrikblau/halal-protocol/pull/169); review or
+  improve that PR rather than opening a duplicate.
+- [Clean-clone verification on another environment (#118)](https://github.com/fredrikblau/halal-protocol/issues/118) —
+  follow the quickstart on a second environment and report tool versions, commands, and the final
+  result; no wallet, credentials, deployment, or real funds are needed.
+- [Fail-closed deployment-manifest tests (#166)](https://github.com/fredrikblau/halal-protocol/issues/166) —
+  add negative-path tests for the offline deployment recorder, including its no-write-on-failure
+  boundary; use temporary fixtures and a fake `cast` binary with no wallet or RPC credentials.
+- [CPI adapter configuration and ownership tests (#173)](https://github.com/fredrikblau/halal-protocol/issues/173) —
+  cover signer, threshold, and two-step ownership boundaries with deterministic local keys and a mock sink;
+  no deployment or real credentials are needed.
+- [Protocol glossary documentation (#117)](https://github.com/fredrikblau/halal-protocol/issues/117) is
+  implemented in contributor-facing [PR #147](https://github.com/fredrikblau/halal-protocol/pull/147);
+  review its terminology against the current contracts instead of duplicating the implementation.
+- [Accessibility smoke coverage (#102)](https://github.com/fredrikblau/halal-protocol/issues/102) is
+  implemented in contributor-owned [PR #107](https://github.com/fredrikblau/halal-protocol/pull/107);
+  review or extend that PR rather than duplicating its implementation.
 
 - The completed [release verification walkthrough](RELEASE-VERIFICATION.md) is a reference for
   clean-checkout tag, artifact, ABI, local-gate, and hosted-check review.
@@ -39,15 +62,12 @@ criteria, and a safe local verification path:
   demonstrates how to separate observations, assumptions, residual risks, and decisions.
 - The completed [local deployment evidence example](LOCAL-DEPLOYMENT-EVIDENCE.md) shows how to
   record safe Anvil-only wiring and health rehearsals.
-- [Deployment manifest source-label round trip (#100)](https://github.com/fredrikblau/halal-protocol/issues/100) —
-  add an offline recorder-to-registry regression test; no RPC, wallet, signing, or deployment is needed.
+- The implementation for [deployment manifest source-label round trip (#100)](https://github.com/fredrikblau/halal-protocol/issues/100)
+  is available in [PR #106](https://github.com/fredrikblau/halal-protocol/pull/106) for review; it is
+  not an active starter task.
 - [CPI source-label reviewer checklist](CPI-ADAPTER-SPEC.md#reviewer-checklist-before-a-governed-handoff) —
   review the PSM label, adapter source ID, policy record, and deployment evidence before a governed handoff;
   the implementation is complete, so use the open issue list for current contributor tasks.
-- [CPI source policy documentation (#80)](https://github.com/fredrikblau/halal-protocol/issues/80) —
-  document how operators record source identity, cadence, custody, and fallback decisions.
-- [dApp accessibility smoke coverage (#102)](https://github.com/fredrikblau/halal-protocol/issues/102) —
-  add role- and state-focused browser checks for health, network, and fail-closed transaction states.
 - [First Arbitrum Sepolia reference deployment (#40)](https://github.com/fredrikblau/halal-protocol/issues/40) —
   coordinate a reviewed testnet deployment and publish reproducible address, source, health, and
   journal evidence; this requires maintainer coordination and is not a casual copy-paste task.

@@ -9,6 +9,7 @@ import {
   parseSignature,
   parseUnits,
   recoverTypedDataAddress,
+  type Hex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
@@ -17,6 +18,11 @@ const ANVIL_ACCOUNT = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" as const;
 const ANVIL_SECOND_ACCOUNT = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8" as const;
 const ANVIL_UPDATER_KEY = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d" as const;
 const ANVIL_UPDATER_ACCOUNT = privateKeyToAccount(ANVIL_UPDATER_KEY);
+const CPI_SIGNER_KEYS = [
+  "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a",
+  "0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6",
+] as const;
+const CPI_SIGNER_ACCOUNTS = CPI_SIGNER_KEYS.map((key) => privateKeyToAccount(key));
 const LOCAL_CHAIN = {
   id: 31_337,
   name: "Anvil (Local)",
@@ -92,6 +98,20 @@ const PSM_ABI = [
   },
 ] as const;
 
+const CPI_ADAPTER_ABI = [
+  {
+    type: "function",
+    name: "submitReport",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "reportedCPI", type: "uint256" },
+      { name: "reportedAt", type: "uint256" },
+      { name: "signatures", type: "bytes[]" },
+    ],
+    outputs: [],
+  },
+] as const;
+
 function readLocalEnv(): Record<string, string> {
   const source = readFileSync(".env.local", "utf8");
   return Object.fromEntries(
@@ -119,12 +139,40 @@ async function seedRedeemableHlc() {
 
   const updaterWallet = createWalletClient({ account: ANVIL_UPDATER_ACCOUNT, chain: LOCAL_CHAIN, transport: http(RPC_URL) });
   const block = await updaterPublicClient.getBlock({ blockTag: "latest" });
+  const reportedAt = block.timestamp - 1n;
+  const signatures = await Promise.all(
+    CPI_SIGNER_ACCOUNTS.map((account) =>
+      account.signTypedData({
+        domain: {
+          name: "Halal CPI Report Adapter",
+          version: "1",
+          chainId: LOCAL_CHAIN.id,
+          verifyingContract: env.NEXT_PUBLIC_HLC_CPI_ADAPTER_31337 as `0x${string}`,
+        },
+        types: { CPIReport: [
+          { name: "reportedCPI", type: "uint256" },
+          { name: "reportedAt", type: "uint256" },
+          { name: "sourceId", type: "bytes32" },
+        ] },
+        primaryType: "CPIReport",
+        message: {
+          reportedCPI: 1_000_000n,
+          reportedAt,
+          sourceId: env.NEXT_PUBLIC_HLC_CPI_SOURCE_ID_31337 as Hex,
+        },
+      }),
+    ),
+  );
+  const orderedSignatures = CPI_SIGNER_ACCOUNTS
+    .map((account, index) => ({ address: account.address.toLowerCase(), signature: signatures[index] }))
+    .sort((left, right) => left.address.localeCompare(right.address))
+    .map(({ signature }) => signature);
   const reportHash = await updaterWallet.writeContract({
     account: ANVIL_UPDATER_ACCOUNT,
-    address: env.NEXT_PUBLIC_HLC_PSM_31337 as `0x${string}`,
-    abi: PSM_ABI,
-    functionName: "updateCPIWithTimestamp",
-    args: [1_000_000n, block.timestamp - 1n],
+    address: env.NEXT_PUBLIC_HLC_CPI_ADAPTER_31337 as `0x${string}`,
+    abi: CPI_ADAPTER_ABI,
+    functionName: "submitReport",
+    args: [1_000_000n, reportedAt, orderedSignatures],
   });
   await updaterPublicClient.waitForTransactionReceipt({ hash: reportHash });
   const wallet = createWalletClient({ account, chain: LOCAL_CHAIN, transport: http(RPC_URL) });
