@@ -859,10 +859,44 @@ test("blocks health when CPI freshness metadata cannot be read", async ({ page }
 
   await page.goto("/health");
   const healthChecks = page.getByRole("list", { name: "Deployment health checks" });
+  // A batch where every report read fails now surfaces through usePsmState's error path, which
+  // reportCheck evaluates before the undefined-value fallback. The freshness check must still be
+  // Blocking; only the wording differs between the two fail-closed routes.
   await expect(healthChecks.getByRole("listitem", { name: "CPI report freshness Blocking" })).toContainText(
-    "CPI report freshness data could not be read. Refresh the page before relying on this status.",
+    "One or more contract reads failed. Refresh the page or check the selected network.",
   );
   await expect(page.getByRole("status", { name: "Overall deployment health" })).toContainText("Blocking");
+});
+
+test("reports incomplete CPI freshness data on the PSM dashboard", async ({ page }) => {
+  const env = readLocalEnv();
+  const psmAddress = env.NEXT_PUBLIC_HLC_PSM_31337.toLowerCase();
+  await page.route(/127\.0\.0\.1:18545/, async (route) => {
+    const request = route.request();
+    const body = request.postDataJSON() as { method?: string; params?: Array<{ to?: string; data?: string }> };
+    const call = body.params?.[0];
+    const selector = call?.data?.toLowerCase().slice(0, 10);
+    if (
+      body.method === "eth_call" &&
+      call?.to?.toLowerCase() === psmAddress &&
+      (selector === "0x57db845a" || selector === "0xb4a5f34d")
+    ) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, error: { code: -32000, message: "CPI metadata unavailable" } }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await installAnvilProvider(page);
+  await page.goto("/psm");
+  await expect(page.getByText("Some PSM data could not be loaded", { exact: true })).toBeVisible();
+  await expect(page.getByText("One or more contract reads failed. Refresh the page or check the selected network.")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Deposits paused until the protocol is healthy" })).toBeDisabled();
+  expect(await page.evaluate(() => (window as Window & { __lastTransaction?: unknown }).__lastTransaction)).toBeUndefined();
 });
 
 test("blocks reserve-deficit health and pauses new PSM deposits", async ({ page }) => {

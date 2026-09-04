@@ -245,3 +245,10 @@ kill switch," and this system doesn't have the latter. If a future version of th
 one, that's a deliberate governance-model change (e.g. a DAO-elected, term-limited, narrowly-scoped
 guardian committee) worth its own proposal and discussion, not a role grant slipped in as if it
 were already part of the design.
+
+## 7. Minting and burning roles require deployed modules
+
+`MINTER_ROLE` and `BURNER_ROLE` are module capabilities, not discretionary permissions for
+externally owned accounts. `HalalToken.grantRole` therefore rejects an EOA or undeployed address
+for either role. The PSM and any future accounting-aware module must be deployed before the DAO
+can authorize it; governance can revoke a compromised module without creating an EOA issuer.
