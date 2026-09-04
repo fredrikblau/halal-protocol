@@ -859,8 +859,11 @@ test("blocks health when CPI freshness metadata cannot be read", async ({ page }
 
   await page.goto("/health");
   const healthChecks = page.getByRole("list", { name: "Deployment health checks" });
+  // A batch where every report read fails now surfaces through usePsmState's error path, which
+  // reportCheck evaluates before the undefined-value fallback. The freshness check must still be
+  // Blocking; only the wording differs between the two fail-closed routes.
   await expect(healthChecks.getByRole("listitem", { name: "CPI report freshness Blocking" })).toContainText(
-    "CPI report freshness data could not be read. Refresh the page before relying on this status.",
+    "One or more contract reads failed. Refresh the page or check the selected network.",
   );
   await expect(page.getByRole("status", { name: "Overall deployment health" })).toContainText("Blocking");
 });
