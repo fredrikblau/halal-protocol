@@ -11,6 +11,7 @@ import { MockReentrantERC20 } from "./mocks/MockReentrantERC20.sol";
 import { MockFalseReturnERC20 } from "./mocks/MockFalseReturnERC20.sol";
 import { MockNoReturnERC20 } from "./mocks/MockNoReturnERC20.sol";
 import { MockPermitERC20 } from "./mocks/MockPermitERC20.sol";
+import { MockTransferLimitERC20 } from "./mocks/MockTransferLimitERC20.sol";
 import { Math } from "@openzeppelin/contracts/utils/math/Math.sol";
 import { IERC20Permit } from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 
@@ -1249,6 +1250,30 @@ contract HalalPSMTest is Deployers {
         vm.expectRevert(HalalPSM.InsufficientRedeemableBalance.selector);
         psm.withdraw(600e18);
         vm.stopPrank();
+    }
+
+    function test_RevertWhen_ReserveTransferExceedsTokenLimitWithoutIssuingHLC() public {
+        MockTransferLimitERC20 limitedReserve = new MockTransferLimitERC20(100e18);
+        HalalPSM limitedPsm = new HalalPSM(address(limitedReserve), address(token), address(timelock), address(this));
+        _grantPsmTokenRoles(limitedPsm);
+        limitedPsm.updateCPI(1_000_000);
+
+        limitedReserve.mint(alice, 101e18);
+        vm.startPrank(alice);
+        limitedReserve.approve(address(limitedPsm), type(uint256).max);
+        vm.expectRevert(abi.encodeWithSelector(MockTransferLimitERC20.TransferLimitExceeded.selector, 101e18, 100e18));
+        limitedPsm.deposit(101e18);
+        vm.stopPrank();
+
+        assertEq(limitedPsm.totalHlcIssued(), 0);
+        assertEq(limitedPsm.redeemableBalance(alice), 0);
+        assertEq(limitedReserve.balanceOf(address(limitedPsm)), 0);
+
+        vm.startPrank(alice);
+        limitedPsm.deposit(100e18);
+        vm.stopPrank();
+        assertEq(limitedPsm.totalHlcIssued(), 100e18);
+        assertEq(limitedPsm.redeemableBalance(alice), 100e18);
     }
 
     function _permitSignature(

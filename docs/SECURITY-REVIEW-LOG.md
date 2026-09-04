@@ -37,7 +37,7 @@ From the repository root:
 make verify
 ```
 
-The review run passed 196 Solidity tests (including stateful invariants), 81 Node tests, and 26
+The review run passed 199 Solidity tests (including stateful invariants), 81 Node tests, and 26
 browser tests, plus contract lint, frontend lint/build, local Anvil smoke tests, and the signed CPI
 adapter rehearsal. The pinned Slither record is maintained separately in
 [`STATIC-ANALYSIS.md`](STATIC-ANALYSIS.md).
