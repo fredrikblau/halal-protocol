@@ -804,6 +804,36 @@ test("fails closed when reserve-token metadata cannot be read", async ({ page })
   expect(await page.evaluate(() => (window as Window & { __lastTransaction?: unknown }).__lastTransaction)).toBeUndefined();
 });
 
+test("blocks health when CPI freshness metadata cannot be read", async ({ page }) => {
+  const env = readLocalEnv();
+  const psmAddress = env.NEXT_PUBLIC_HLC_PSM_31337.toLowerCase();
+  await page.route(/127\.0\.0\.1:18545/, async (route) => {
+    const request = route.request();
+    const body = request.postDataJSON() as { method?: string; params?: Array<{ to?: string; data?: string }> };
+    const call = body.params?.[0];
+    if (
+      body.method === "eth_call" &&
+      call?.to?.toLowerCase() === psmAddress &&
+      ["0x57db845a", "0xb4a5f34d"].includes(call.data?.slice(0, 10).toLowerCase() ?? "")
+    ) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, error: { code: -32000, message: "CPI freshness metadata unavailable" } }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/health");
+  const healthChecks = page.getByRole("list", { name: "Deployment health checks" });
+  await expect(healthChecks.getByRole("listitem", { name: "CPI report freshness Blocking" })).toContainText(
+    "CPI report freshness data could not be read. Refresh the page before relying on this status.",
+  );
+  await expect(page.getByRole("status", { name: "Overall deployment health" })).toContainText("Blocking");
+});
+
 test("blocks reserve-deficit health and pauses new PSM deposits", async ({ page }) => {
   await seedRedeemableHlc();
   const testClient = createTestClient({ chain: LOCAL_CHAIN, mode: "anvil", transport: http(RPC_URL) });
