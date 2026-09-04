@@ -28,6 +28,7 @@ contract HalalToken is ERC20, ERC20Permit, ERC20Votes, AccessControl {
 
     error ZeroAddress();
     error NotContract();
+    error RoleRecipientNotContract();
     error GenesisAlreadyMinted();
     error GenesisRecipientsNotDistinct();
 
@@ -59,6 +60,16 @@ contract HalalToken is ERC20, ERC20Permit, ERC20Votes, AccessControl {
     /// mint/burn against deposited reserves) and, on a case-by-case governance vote, to future modules.
     function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
         _mint(to, amount);
+    }
+
+    /// @notice Grants a minting or accounting-aware burning role only to deployed modules.
+    /// Governance may still grant other roles to addresses such as the temporary deployment
+    /// administrator, but an EOA must never become an independent token issuer or burner.
+    function grantRole(bytes32 role, address account) public override onlyRole(getRoleAdmin(role)) {
+        if ((role == MINTER_ROLE || role == BURNER_ROLE) && account.code.length == 0) {
+            revert RoleRecipientNotContract();
+        }
+        _grantRole(role, account);
     }
 
     /// @notice Burns HLC through an accounting-aware protocol module such as HalalPSM.
