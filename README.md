@@ -5,7 +5,7 @@
 [![Slither](https://github.com/fredrikblau/halal-protocol/actions/workflows/slither.yml/badge.svg)](https://github.com/fredrikblau/halal-protocol/actions/workflows/slither.yml)
 [![Deep contract tests](https://github.com/fredrikblau/halal-protocol/actions/workflows/deep-tests.yml/badge.svg)](https://github.com/fredrikblau/halal-protocol/actions/workflows/deep-tests.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/fredrikblau/halal-protocol/badge)](https://securityscorecards.dev/viewer/?uri=github.com/fredrikblau/halal-protocol)
-[![Latest release](https://img.shields.io/github/v/release/fredrikblau/halal-protocol?include_prereleases&label=latest%20release)](https://github.com/fredrikblau/halal-protocol/releases)
+[![Latest preview](https://img.shields.io/github/v/release/fredrikblau/halal-protocol?include_prereleases&label=latest%20preview)](https://github.com/fredrikblau/halal-protocol/releases)
 [![GitHub stars](https://img.shields.io/github/stars/fredrikblau/halal-protocol?style=social)](https://github.com/fredrikblau/halal-protocol/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/fredrikblau/halal-protocol?style=social)](https://github.com/fredrikblau/halal-protocol/network/members)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -38,6 +38,10 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
 - Follow the [local development walkthrough](docs/LOCAL-DEVELOPMENT.md) from a clean checkout.
 - Use the [local-demo troubleshooting guide](docs/LOCAL-DEMO-TROUBLESHOOTING.md) if a prerequisite,
   port, or stale local configuration blocks the demo.
+- Review the [proposed CPI source-policy record](docs/CPI-SOURCE-POLICY-BLS-DRAFT.md) (based on the
+  [template](docs/CPI-SOURCE-POLICY-TEMPLATE.md)) documenting the reporting trust boundary:
+  source series, publisher identity, cadence, freshness, fallback, updater custody, and
+  incident response. This record is a proposal under review, not production approval.
 - Run `make verify` before opening a pull request.
 - Pick one of the three currently unclaimed [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22):
   [clean-clone verification on another environment](https://github.com/fredrikblau/halal-protocol/issues/118) or
@@ -160,6 +164,8 @@ walkthrough, and the exact API surface — see:
   number or behavior described in the docs above is exactly what the code does.
 - [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md) — assets, trust boundaries, attack scenarios,
   mitigations, and unresolved risks for reviewers and deployment operators.
+- [`docs/SECURITY-REVIEW-QUICKSTART.md`](docs/SECURITY-REVIEW-QUICKSTART.md) — reproducible
+  security-review commands, bounded review questions, evidence expectations, and safe reporting.
 - [`docs/OPERATOR-RUNBOOK.md`](docs/OPERATOR-RUNBOOK.md) — launch acceptance, monitoring, CPI
   updater operations, governance review, and incident response.
 - [`scripts/verify-governance-payload.mjs`](scripts/verify-governance-payload.mjs) — offline,
@@ -176,6 +182,8 @@ walkthrough, and the exact API surface — see:
   worksheet for operational failures and recovery evidence.
 - [`docs/CONTRIBUTOR-MAP.md`](docs/CONTRIBUTOR-MAP.md) — concrete contribution paths for security,
   oracle integrations, monitoring, economics, governance, dApp UX, and documentation.
+- [`docs/GLOSSARY.md`](docs/GLOSSARY.md) — concise definitions of the protocol terms used by the
+  contracts, documentation, and contributor issues.
 - [`docs/LOCAL-CPI-REPORT-WALKTHROUGH.md`](docs/LOCAL-CPI-REPORT-WALKTHROUGH.md) — copy-paste local
   CPI report preparation and verification lifecycle.
 - [Security review challenge #16](https://github.com/fredrikblau/halal-protocol/issues/16) — a bounded

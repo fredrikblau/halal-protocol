@@ -9,6 +9,7 @@ import {
   parseSignature,
   parseUnits,
   recoverTypedDataAddress,
+  type Hex,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 
@@ -17,6 +18,11 @@ const ANVIL_ACCOUNT = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266" as const;
 const ANVIL_SECOND_ACCOUNT = "0x70997970c51812dc3a010c7d01b50e0d17dc79c8" as const;
 const ANVIL_UPDATER_KEY = "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d" as const;
 const ANVIL_UPDATER_ACCOUNT = privateKeyToAccount(ANVIL_UPDATER_KEY);
+const CPI_SIGNER_KEYS = [
+  "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a",
+  "0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6",
+] as const;
+const CPI_SIGNER_ACCOUNTS = CPI_SIGNER_KEYS.map((key) => privateKeyToAccount(key));
 const LOCAL_CHAIN = {
   id: 31_337,
   name: "Anvil (Local)",
@@ -92,6 +98,20 @@ const PSM_ABI = [
   },
 ] as const;
 
+const CPI_ADAPTER_ABI = [
+  {
+    type: "function",
+    name: "submitReport",
+    stateMutability: "nonpayable",
+    inputs: [
+      { name: "reportedCPI", type: "uint256" },
+      { name: "reportedAt", type: "uint256" },
+      { name: "signatures", type: "bytes[]" },
+    ],
+    outputs: [],
+  },
+] as const;
+
 function readLocalEnv(): Record<string, string> {
   const source = readFileSync(".env.local", "utf8");
   return Object.fromEntries(
@@ -119,12 +139,40 @@ async function seedRedeemableHlc() {
 
   const updaterWallet = createWalletClient({ account: ANVIL_UPDATER_ACCOUNT, chain: LOCAL_CHAIN, transport: http(RPC_URL) });
   const block = await updaterPublicClient.getBlock({ blockTag: "latest" });
+  const reportedAt = block.timestamp - 1n;
+  const signatures = await Promise.all(
+    CPI_SIGNER_ACCOUNTS.map((account) =>
+      account.signTypedData({
+        domain: {
+          name: "Halal CPI Report Adapter",
+          version: "1",
+          chainId: LOCAL_CHAIN.id,
+          verifyingContract: env.NEXT_PUBLIC_HLC_CPI_ADAPTER_31337 as `0x${string}`,
+        },
+        types: { CPIReport: [
+          { name: "reportedCPI", type: "uint256" },
+          { name: "reportedAt", type: "uint256" },
+          { name: "sourceId", type: "bytes32" },
+        ] },
+        primaryType: "CPIReport",
+        message: {
+          reportedCPI: 1_000_000n,
+          reportedAt,
+          sourceId: env.NEXT_PUBLIC_HLC_CPI_SOURCE_ID_31337 as Hex,
+        },
+      }),
+    ),
+  );
+  const orderedSignatures = CPI_SIGNER_ACCOUNTS
+    .map((account, index) => ({ address: account.address.toLowerCase(), signature: signatures[index] }))
+    .sort((left, right) => left.address.localeCompare(right.address))
+    .map(({ signature }) => signature);
   const reportHash = await updaterWallet.writeContract({
     account: ANVIL_UPDATER_ACCOUNT,
-    address: env.NEXT_PUBLIC_HLC_PSM_31337 as `0x${string}`,
-    abi: PSM_ABI,
-    functionName: "updateCPIWithTimestamp",
-    args: [1_000_000n, block.timestamp - 1n],
+    address: env.NEXT_PUBLIC_HLC_CPI_ADAPTER_31337 as `0x${string}`,
+    abi: CPI_ADAPTER_ABI,
+    functionName: "submitReport",
+    args: [1_000_000n, reportedAt, orderedSignatures],
   });
   await updaterPublicClient.waitForTransactionReceipt({ hash: reportHash });
   const wallet = createWalletClient({ account, chain: LOCAL_CHAIN, transport: http(RPC_URL) });
@@ -785,6 +833,36 @@ test("fails closed when reserve-token metadata cannot be read", async ({ page })
   await expect(page.getByText("Unable to read mDAI token metadata.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Waiting for wallet data" })).toBeDisabled();
   expect(await page.evaluate(() => (window as Window & { __lastTransaction?: unknown }).__lastTransaction)).toBeUndefined();
+});
+
+test("blocks health when CPI freshness metadata cannot be read", async ({ page }) => {
+  const env = readLocalEnv();
+  const psmAddress = env.NEXT_PUBLIC_HLC_PSM_31337.toLowerCase();
+  await page.route(/127\.0\.0\.1:18545/, async (route) => {
+    const request = route.request();
+    const body = request.postDataJSON() as { method?: string; params?: Array<{ to?: string; data?: string }> };
+    const call = body.params?.[0];
+    if (
+      body.method === "eth_call" &&
+      call?.to?.toLowerCase() === psmAddress &&
+      ["0x57db845a", "0xb4a5f34d"].includes(call.data?.slice(0, 10).toLowerCase() ?? "")
+    ) {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, error: { code: -32000, message: "CPI freshness metadata unavailable" } }),
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto("/health");
+  const healthChecks = page.getByRole("list", { name: "Deployment health checks" });
+  await expect(healthChecks.getByRole("listitem", { name: "CPI report freshness Blocking" })).toContainText(
+    "CPI report freshness data could not be read. Refresh the page before relying on this status.",
+  );
+  await expect(page.getByRole("status", { name: "Overall deployment health" })).toContainText("Blocking");
 });
 
 test("blocks reserve-deficit health and pauses new PSM deposits", async ({ page }) => {

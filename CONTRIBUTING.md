@@ -36,7 +36,8 @@ Read the issue acceptance criteria, comment with your intended approach, and ope
 If a task is already claimed or has an active contributor PR, choose another starter issue or
 help review the existing work instead of duplicating it.
 
-1. Fork the repository and clone your fork.
+1. Fork the repository and clone your fork with `git clone --recurse-submodules`; if the clone
+   already exists, run `git submodule update --init --recursive`.
 2. Create a topic branch off `main`: `git checkout -b feat/short-description`.
 3. Make your changes, following the code style and testing expectations below.
 4. Push your branch to your fork and open a pull request against `main` on the upstream repo.
