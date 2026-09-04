@@ -44,8 +44,15 @@ kill <PID>
 
 If it does not stop, use `kill -TERM <PID>` and inspect again. Do not kill an unidentified process
 or a shared Anvil/Next.js server. Then retry `./scripts/local-demo.sh` or `make app-smoke`.
-You can choose alternate smoke-test ports with `ANVIL_PORT` and `APP_PORT`; the interactive demo
-uses the fixed ports above.
+The interactive demo defaults to those ports but accepts alternate values with `ANVIL_PORT` and
+`APP_PORT`:
+
+```shell
+ANVIL_PORT=18546 APP_PORT=3002 ./scripts/local-demo.sh
+```
+
+The two values must be distinct integers from `1` through `65535`. The smoke test continues to
+use its own defaults (`18545` and `3001`) and also accepts these overrides.
 
 ## Anvil did not start or the RPC is unresponsive
 
@@ -89,7 +96,7 @@ If deployment succeeds but the app does not open, inspect the Next.js log and te
 
 ```shell
 tail -n 100 /tmp/halal-app-smoke-next.log
-curl --fail --silent --show-error http://127.0.0.1:3000/
+curl --fail --silent --show-error "http://127.0.0.1:${APP_PORT:-3000}/"
 ```
 
 After stopping the interactive demo, run the app checks separately:
@@ -106,8 +113,9 @@ are regenerated together.
 ## What success looks like
 
 For the interactive demo, expect output saying that a fresh local CPI report was seeded, temporary
-frontend configuration was written, and the dApp is available at <http://localhost:3000>. The
-dashboard, `/governance`, `/psm`, `/vesting`, and `/health` routes should load.
+frontend configuration was written, and the dApp is available at the configured app port (default
+<http://localhost:3000>). The dashboard, `/governance`, `/psm`, `/vesting`, and `/health` routes
+should load.
 
 For the smoke test:
 

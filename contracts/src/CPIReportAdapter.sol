@@ -9,6 +9,7 @@ import { ReentrancyGuard } from "@openzeppelin/contracts/utils/ReentrancyGuard.s
 
 interface ICPIReportSink {
     function updateCPIWithTimestamp(uint256 reportedCPI, uint256 reportedAt) external;
+    function cpiRate() external view returns (uint256);
     function lastReportTimestamp() external view returns (uint256);
 }
 
@@ -33,6 +34,7 @@ contract CPIReportAdapter is EIP712, Ownable2Step, ReentrancyGuard {
     uint256 public signerCount;
     uint256 public threshold;
     uint256 public lastSubmittedTimestamp;
+    uint256 public lastSubmittedCPI;
 
     error ZeroAddress();
     error NotContract();
@@ -69,6 +71,10 @@ contract CPIReportAdapter is EIP712, Ownable2Step, ReentrancyGuard {
         if (signers_.length == 0 || threshold_ == 0 || threshold_ > signers_.length) revert InvalidSignerSet();
         if (signers_.length > MAX_SIGNERS) revert SignerSetTooLarge();
         psm = ICPIReportSink(psm_);
+        // The adapter may be attached after the PSM has already received its initial CPI value.
+        // Baseline the persisted value to that live state so a fresh adapter is not reported as
+        // divergent before its first signed submission.
+        lastSubmittedCPI = psm.cpiRate();
         sourceId = sourceId_;
         threshold = threshold_;
         emit SourceIdConfigured(sourceId_);
@@ -182,8 +188,11 @@ contract CPIReportAdapter is EIP712, Ownable2Step, ReentrancyGuard {
         // A successful external call is not proof that the configured sink accepted the report.
         // HalalPSM exposes this watermark; require it to advance before recording adapter state so
         // a no-op or incompatible sink cannot make the adapter look healthy.
-        if (psm.lastReportTimestamp() != reportedAt) revert ReportNotAccepted();
+        if (psm.lastReportTimestamp() != reportedAt || psm.cpiRate() != reportedCPI) {
+            revert ReportNotAccepted();
+        }
         lastSubmittedTimestamp = reportedAt;
+        lastSubmittedCPI = reportedCPI;
         emit ReportSubmitted(reportedAt, reportedCPI, signatures.length);
     }
 }
