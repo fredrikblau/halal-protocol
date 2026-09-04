@@ -3,6 +3,7 @@ pragma solidity 0.8.24;
 
 import { DeployHalalSystem } from "../script/Deploy.s.sol";
 import { DeployCPIReportAdapter } from "../script/DeployCPIReportAdapter.s.sol";
+import { Test } from "forge-std/Test.sol";
 
 contract DeployHalalSystemHarness is DeployHalalSystem {
     function defaultVotingPeriod(uint256 chainId) external pure returns (uint256) {
@@ -39,6 +40,23 @@ contract DeployHalalSystemHarness is DeployHalalSystem {
 }
 
 contract DeployCPIReportAdapterHarness is DeployCPIReportAdapter {
+    function configIsValid(
+        uint256 privateKey,
+        uint256 expectedChainId,
+        address deployer,
+        address psm,
+        address owner,
+        address signerOne,
+        address signerTwo,
+        address signerThree,
+        uint256 threshold,
+        bytes32 sourceId
+    ) external view returns (bool) {
+        return _configIsValid(
+            privateKey, expectedChainId, deployer, psm, owner, signerOne, signerTwo, signerThree, threshold, sourceId
+        );
+    }
+
     function psmIsContract(address psm) external view returns (bool) {
         return _psmIsContract(psm);
     }
@@ -58,7 +76,7 @@ contract DeployCPIReportAdapterHarness is DeployCPIReportAdapter {
     }
 }
 
-contract DeployConfigTest {
+contract DeployConfigTest is Test {
     DeployHalalSystemHarness internal deployer = new DeployHalalSystemHarness();
     DeployCPIReportAdapterHarness internal adapterDeployer = new DeployCPIReportAdapterHarness();
 
@@ -134,6 +152,7 @@ contract DeployConfigTest {
         require(
             !adapterDeployer.adapterSignersAreSafe(address(0x1), address(0x5), address(0x2), address(0x3), address(0x5))
         );
+        _assertAdapterDeploymentConfigurationGate();
     }
 
     function test_AdapterDeploymentRequiresAContractPSM() public view {
@@ -146,5 +165,108 @@ contract DeployConfigTest {
         require(adapterDeployer.ownerIsContract(address(deployer)));
         require(!adapterDeployer.ownerIsContract(address(0x1)));
         require(!adapterDeployer.ownerIsContract(address(0)));
+    }
+
+    function _assertAdapterDeploymentConfigurationGate() internal view {
+        uint256 privateKey = 0x1234;
+        address deployerAddress = vm.addr(privateKey);
+        address psm = address(deployer);
+        address owner = address(adapterDeployer);
+        uint256 chainId = block.chainid;
+
+        require(
+            adapterDeployer.configIsValid(
+                privateKey,
+                chainId,
+                deployerAddress,
+                psm,
+                owner,
+                address(0x2),
+                address(0x3),
+                address(0),
+                2,
+                keccak256("source")
+            )
+        );
+        require(
+            adapterDeployer.configIsValid(
+                privateKey,
+                chainId,
+                deployerAddress,
+                psm,
+                owner,
+                address(0x2),
+                address(0x3),
+                address(0x4),
+                3,
+                keccak256("source")
+            )
+        );
+        require(
+            !adapterDeployer.configIsValid(
+                0, chainId, deployerAddress, psm, owner, address(0x2), address(0x3), address(0), 2, keccak256("source")
+            )
+        );
+        require(
+            !adapterDeployer.configIsValid(
+                privateKey,
+                chainId + 1,
+                deployerAddress,
+                psm,
+                owner,
+                address(0x2),
+                address(0x3),
+                address(0),
+                2,
+                keccak256("source")
+            )
+        );
+        require(
+            !adapterDeployer.configIsValid(
+                privateKey,
+                chainId,
+                deployerAddress,
+                address(0x1),
+                owner,
+                address(0x2),
+                address(0x3),
+                address(0),
+                2,
+                keccak256("source")
+            )
+        );
+        require(
+            !adapterDeployer.configIsValid(
+                privateKey,
+                chainId,
+                deployerAddress,
+                psm,
+                address(0x1),
+                address(0x2),
+                address(0x3),
+                address(0),
+                2,
+                keccak256("source")
+            )
+        );
+        require(
+            !adapterDeployer.configIsValid(
+                privateKey,
+                chainId,
+                deployerAddress,
+                psm,
+                owner,
+                address(0x2),
+                address(0x3),
+                address(0),
+                3,
+                keccak256("source")
+            )
+        );
+        require(
+            !adapterDeployer.configIsValid(
+                privateKey, chainId, deployerAddress, psm, owner, address(0x2), address(0x3), address(0), 2, bytes32(0)
+            )
+        );
     }
 }
