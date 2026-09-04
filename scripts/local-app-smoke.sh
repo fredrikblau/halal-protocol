@@ -89,6 +89,9 @@ cast send "$PSM_ADDRESS" 'setSource(string)' "$CPI_SOURCE" --from "$TIMELOCK_ADD
 
 ADAPTER_ADDRESS="$(awk '/CPI report adapter:/ { print $NF; exit }' "$DEPLOY_LOG")"
 test -n "$ADAPTER_ADDRESS"
+UPDATER_ROLE="$(cast call "$PSM_ADDRESS" 'UPDATER_ROLE()(bytes32)' --rpc-url "$LOCAL_RPC_URL")"
+cast send "$PSM_ADDRESS" 'grantRole(bytes32,address)' "$UPDATER_ROLE" "$ADAPTER_ADDRESS" \
+  --from "$TIMELOCK_ADDRESS" --unlocked --rpc-url "$LOCAL_RPC_URL" >/dev/null
 if [[ -e "$APP_ENV_FILE" ]]; then
   APP_ENV_BACKUP="$(mktemp)"
   cp -p "$APP_ENV_FILE" "$APP_ENV_BACKUP"

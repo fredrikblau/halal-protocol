@@ -174,7 +174,11 @@ contract HalalPSMTest is Deployers {
     }
 
     function testFuzz_RoundTripNeverOverpays(uint128 reserveAmount) public {
-        vm.assume(reserveAmount >= 1e12 && reserveAmount <= 1e24);
+        // Bound the generated value instead of rejecting almost every uint128 sample. The old
+        // assume-based range had a probability of roughly 1 in 2^48 of accepting an arbitrary
+        // uint128 input, so higher fuzz-run counts could exhaust Foundry's assume-rejection cap
+        // before exercising the property.
+        reserveAmount = uint128(bound(uint256(reserveAmount), 1e12, 1e24));
 
         vm.prank(address(timelock));
         psm.mockCPI(1_100_000);
@@ -1154,6 +1158,50 @@ contract HalalPSMTest is Deployers {
         assertEq(token.balanceOf(recipient), amount);
         assertEq(psm.redeemableBalance(permitAlice), 60e18);
         assertEq(psm.redeemableBalance(recipient), amount);
+
+        _assertPermitTransferRejectsZeroRecipient();
+        _assertPermitTransferRejectsZeroAmount();
+    }
+
+    function _assertPermitTransferRejectsZeroRecipient() internal {
+        (address permitAlice, uint256 permitAliceKey) = makeAddrAndKey("permitZeroRecipient");
+        reserve.mint(permitAlice, 100e18);
+        vm.startPrank(permitAlice);
+        reserve.approve(address(psm), 100e18);
+        psm.deposit(100e18);
+        vm.stopPrank();
+
+        uint256 amount = 40e18;
+        uint256 deadline = block.timestamp + 1 hours;
+        (uint8 v, bytes32 r, bytes32 s) =
+            _permitSignature(address(token), permitAlice, address(psm), amount, deadline, permitAliceKey);
+
+        vm.prank(permitAlice);
+        vm.expectRevert(HalalPSM.ZeroAddress.selector);
+        psm.transferRedeemableWithPermit(address(0), amount, deadline, v, r, s);
+
+        assertEq(psm.redeemableBalance(permitAlice), 100e18);
+        assertEq(token.nonces(permitAlice), 0);
+    }
+
+    function _assertPermitTransferRejectsZeroAmount() internal {
+        (address permitAlice, uint256 permitAliceKey) = makeAddrAndKey("permitZeroAmount");
+        reserve.mint(permitAlice, 100e18);
+        vm.startPrank(permitAlice);
+        reserve.approve(address(psm), 100e18);
+        psm.deposit(100e18);
+        vm.stopPrank();
+
+        uint256 deadline = block.timestamp + 1 hours;
+        (uint8 v, bytes32 r, bytes32 s) =
+            _permitSignature(address(token), permitAlice, address(psm), 0, deadline, permitAliceKey);
+
+        vm.prank(permitAlice);
+        vm.expectRevert(HalalPSM.ZeroAmount.selector);
+        psm.transferRedeemableWithPermit(makeAddr("permitNonZeroRecipient"), 0, deadline, v, r, s);
+
+        assertEq(psm.redeemableBalance(permitAlice), 100e18);
+        assertEq(token.nonces(permitAlice), 0);
     }
 
     function test_RedeemableBalanceTracksDepositsAndWithdrawals() public {

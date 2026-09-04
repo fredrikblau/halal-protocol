@@ -1,0 +1,57 @@
+name: Security review note
+description: Share a non-sensitive, reproducible security review observation or review record.
+title: "review: "
+labels: [security]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for non-sensitive review notes, checked assumptions, and reproducible observations.
+        Do not publish fund-risking or access-control vulnerabilities here. Submit those through
+        [SECURITY.md](../../SECURITY.md) instead.
+  - type: input
+    id: scope
+    attributes:
+      label: Review scope
+      description: Name the contracts, scripts, frontend flow, or deployment assumption you examined.
+      placeholder: HalalPSM redemption accounting and CPI freshness
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit or release reviewed
+      placeholder: Full commit SHA or release tag
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: List exact commands, test names, file/line references, or links another reviewer can reproduce.
+      placeholder: |
+        make verify
+        forge test --match-contract HalalPSMTest
+    validations:
+      required: true
+  - type: textarea
+    id: observation
+    attributes:
+      label: Observation
+      description: State the behavior, assumption, or non-sensitive finding and its consequence.
+    validations:
+      required: true
+  - type: textarea
+    id: residual-risk
+    attributes:
+      label: Residual risk and follow-up
+      description: Record what remains uncertain, what an operator should verify, or what change you propose.
+  - type: checkboxes
+    id: safe-reporting
+    attributes:
+      label: Safe public report
+      options:
+        - label: I confirm this note contains no private keys, credentials, personal data, or fund-risking vulnerability details.
+          required: true
+        - label: I understand suspected vulnerabilities belong in [`SECURITY.md`](../../SECURITY.md), not a public issue.
+          required: true
