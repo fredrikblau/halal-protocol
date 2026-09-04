@@ -38,9 +38,17 @@ function withoutFencedCode(markdown) {
   return output.join("\n");
 }
 
+function stripHtmlTags(value) {
+  let previous;
+  do {
+    previous = value;
+    value = value.replace(/<[^>]*>/g, "");
+  } while (value !== previous);
+  return value;
+}
+
 function githubSlug(heading) {
-  return heading
-    .replace(/<[^>]*>/g, "")
+  return stripHtmlTags(heading)
     .replace(/!?(\[[^\]]*\])\([^)]*\)/g, "$1")
     .replace(/[`*_~]/g, "")
     .trim()
