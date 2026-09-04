@@ -16,6 +16,7 @@ import { useDeployment } from "./useDeployment";
 const MINTER_ROLE = keccak256(toBytes("MINTER_ROLE"));
 const BURNER_ROLE = keccak256(toBytes("BURNER_ROLE"));
 const PARAM_ROLE = keccak256(toBytes("PARAM_ROLE"));
+const UPDATER_ROLE = keccak256(toBytes("UPDATER_ROLE"));
 const PROPOSER_ROLE = keccak256(toBytes("PROPOSER_ROLE"));
 const EXECUTOR_ROLE = keccak256(toBytes("EXECUTOR_ROLE"));
 
@@ -55,6 +56,12 @@ export function useDeploymentIntegrity() {
         { address: deployment.token, abi: halalTokenAbi, functionName: "hasRole", args: [zeroHash, deployment.timelock] },
         { address: deployment.psm, abi: halalPsmAbi, functionName: "hasRole", args: [zeroHash, deployment.timelock] },
         { address: deployment.psm, abi: halalPsmAbi, functionName: "hasRole", args: [PARAM_ROLE, deployment.timelock] },
+        {
+          address: deployment.psm,
+          abi: halalPsmAbi,
+          functionName: "hasRole",
+          args: [UPDATER_ROLE, deployment.cpiAdapter ?? zeroAddress],
+        },
         { address: deployment.psm, abi: halalPsmAbi, functionName: "source" },
         { address: deployment.timelock, abi: halalTimelockAbi, functionName: "hasRole", args: [PROPOSER_ROLE, deployment.dao] },
         { address: deployment.timelock, abi: halalTimelockAbi, functionName: "hasRole", args: [EXECUTOR_ROLE, zeroAddress] },
@@ -85,16 +92,17 @@ export function useDeploymentIntegrity() {
   const tokenAdmin = get<boolean>(11);
   const psmAdmin = get<boolean>(12);
   const psmParam = get<boolean>(13);
-  const psmSource = get<string>(14);
-  const timelockProposer = get<boolean>(15);
-  const timelockExecutor = get<boolean>(16);
-  const timelockSelfAdmin = get<boolean>(17);
-  const adapterPsm = get<Address>(18);
-  const adapterOwner = get<Address>(19);
-  const adapterSourceId = get<`0x${string}`>(20);
-  const adapterThreshold = get<bigint>(21);
-  const adapterSignerCount = get<bigint>(22);
-  const adapterSigners = get<Address[]>(23);
+  const adapterUpdater = get<boolean>(14);
+  const psmSource = get<string>(15);
+  const timelockProposer = get<boolean>(16);
+  const timelockExecutor = get<boolean>(17);
+  const timelockSelfAdmin = get<boolean>(18);
+  const adapterPsm = get<Address>(19);
+  const adapterOwner = get<Address>(20);
+  const adapterSourceId = get<`0x${string}`>(21);
+  const adapterThreshold = get<bigint>(22);
+  const adapterSignerCount = get<bigint>(23);
+  const adapterSigners = get<Address[]>(24);
   const expected = deployment;
   const adapterConfigurationComplete =
     expected?.cpiAdapter === undefined &&
@@ -108,7 +116,8 @@ export function useDeploymentIntegrity() {
         expected?.cpiPolicyUrl !== undefined;
 
   const readFailed = hasReadFailure(data);
-  const isVerified =
+  const integrityReadError = isError || readFailed;
+  const configurationMatches =
     expected !== undefined &&
     reserve?.toLowerCase() === expected.reserveToken.toLowerCase() &&
     psmToken?.toLowerCase() === expected.token.toLowerCase() &&
@@ -125,6 +134,7 @@ export function useDeploymentIntegrity() {
     tokenAdmin === true &&
     psmAdmin === true &&
     psmParam === true &&
+    (expected?.cpiAdapter === undefined || adapterUpdater === true) &&
     timelockProposer === true &&
     timelockExecutor === true &&
     timelockSelfAdmin === true &&
@@ -141,10 +151,15 @@ export function useDeploymentIntegrity() {
         adapterThreshold <= adapterSignerCount &&
         BigInt(adapterSigners.length) === adapterSignerCount)));
 
+  // A refetch can retain the last successful result while reporting a current RPC error. Never
+  // leave signing enabled from that stale snapshot: a failed refresh must be treated as
+  // unverified until the complete contract graph is read successfully again.
+  const isVerified = configurationMatches && !integrityReadError;
+
   return {
     isVerified,
     isChecking: deployment !== undefined && (isLoading || data === undefined),
-    isError: isError || readFailed,
+    isError: integrityReadError,
     error: error ?? (readFailed ? partialReadError() : undefined),
     refetch,
   };
