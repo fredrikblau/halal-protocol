@@ -27,11 +27,9 @@ jobs:
           persist-credentials: false
 
       - name: Verify citation version matches release tag
-        env:
-          EXPECTED_VERSION: ${{ env.RELEASE_TAG }}
         run: |
           set -euo pipefail
-          expected_version="${EXPECTED_VERSION#v}"
+          expected_version="${RELEASE_TAG#v}"
           citation_version="$(awk -F': ' '$1 == "version" { print $2; exit }' CITATION.cff)"
           test -n "$citation_version"
           test "$citation_version" = "$expected_version"

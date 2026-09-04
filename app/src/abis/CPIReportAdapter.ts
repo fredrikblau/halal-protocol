@@ -157,6 +157,19 @@ export const cpiReportAdapterAbi = [
   },
   {
     "type": "function",
+    "name": "lastSubmittedCPI",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "lastSubmittedTimestamp",
     "inputs": [],
     "outputs": [
