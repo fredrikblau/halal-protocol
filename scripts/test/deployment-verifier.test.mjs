@@ -29,8 +29,8 @@ function fakeCastScript() {
   return `#!/usr/bin/env bash
 set -euo pipefail
 case "$1" in
-  chain-id) echo 421614 ;;
-  code) echo 0x1234 ;;
+  chain-id) echo "\${FAKE_CHAIN_ID:-421614}" ;;
+  code) [[ -n "\${FAKE_EOA:-}" && "$2" == "$FAKE_EOA" ]] && echo 0x || echo 0x1234 ;;
   call)
     target="$2"
     signature="$3"
@@ -57,6 +57,9 @@ case "$1" in
       'sourceId()('* ) echo ${SOURCE_ID} ;;
       'source()('* ) echo '"BLS:CUUR0000SA0"' ;;
       'lastSubmittedTimestamp()('* ) echo "\${FAKE_ADAPTER_WATERMARK:-0}" ;;
+      'lastSubmittedCPI()('* ) echo "\${FAKE_ADAPTER_CPI:-1000000}" ;;
+      'cpiRate()('* )
+        if [[ "$target" == "${ADDRESSES.psm}" ]]; then echo "\${FAKE_PSM_CPI:-1000000}"; else echo "unexpected cpiRate target" >&2; exit 1; fi ;;
       'lastReportTimestamp()('* ) echo "\${FAKE_PSM_WATERMARK:-0}" ;;
       'threshold()('* ) echo "\${FAKE_ADAPTER_THRESHOLD:-2}" ;;
       'signerCount()('* ) echo "\${FAKE_ADAPTER_SIGNER_COUNT:-2}" ;;
@@ -77,7 +80,7 @@ function runVerifier(withAdapter, overrides = {}) {
   const env = {
     ...process.env,
     PATH: `${directory}:${process.env.PATH}`,
-    RPC_URL: "http://fake-rpc.invalid",
+    RPC_URL: "https://fake-rpc.invalid",
     EXPECTED_CHAIN_ID: "421614",
     TIMELOCK: ADDRESSES.timelock,
     TOKEN: ADDRESSES.token,
@@ -116,6 +119,12 @@ test("deployment verifier rejects mismatched CPI adapter and PSM watermarks", ()
   assert.match(result.stderr, /CPI adapter report watermark/);
 });
 
+test("deployment verifier rejects mismatched CPI adapter and PSM rates", () => {
+  const result = runVerifier(true, { FAKE_ADAPTER_CPI: "1000001", FAKE_PSM_CPI: "1000000" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /CPI adapter submitted rate/);
+});
+
 test("deployment verifier rejects an oversized CPI adapter signer count", () => {
   const result = runVerifier(true, { FAKE_ADAPTER_SIGNER_COUNT: "65" });
   assert.notEqual(result.status, 0);
@@ -126,4 +135,50 @@ test("deployment verifier rejects a changed PSM CPI source label", () => {
   const result = runVerifier(true, { EXPECTED_CPI_SOURCE: "different-source" });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /PSM CPI source/);
+});
+
+test("deployment verifier rejects shared production beneficiaries", () => {
+  const result = runVerifier(false, {
+    TEAM_BENEFICIARY: ADDRESSES.teamBeneficiary,
+    TREASURY_BENEFICIARY: ADDRESSES.teamBeneficiary,
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /team and treasury beneficiaries must be distinct/);
+});
+
+test("deployment verifier rejects EOA production beneficiaries", () => {
+  const result = runVerifier(false, { FAKE_EOA: ADDRESSES.teamBeneficiary });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /team beneficiary has no deployed contract bytecode/);
+});
+
+test("deployment verifier rejects an EOA CPI adapter owner", () => {
+  const result = runVerifier(true, {
+    FAKE_EOA: ADDRESSES.signerOne,
+    EXPECTED_CPI_ADAPTER_OWNER: ADDRESSES.signerOne,
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /CPI adapter owner has no deployed contract bytecode/);
+});
+
+test("deployment verifier rejects the local beneficiary escape hatch on a remote chain", () => {
+  const result = runVerifier(false, { ALLOW_DEPLOYER_BENEFICIARY: "true" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /restricted to Anvil chain 31337/);
+});
+
+test("deployment verifier permits the beneficiary escape hatch only on loopback Anvil", () => {
+  const result = runVerifier(false, {
+    ALLOW_DEPLOYER_BENEFICIARY: "true",
+    EXPECTED_CHAIN_ID: "31337",
+    FAKE_CHAIN_ID: "31337",
+    RPC_URL: "http://127.0.0.1:8545",
+  });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+});
+
+test("deployment verifier rejects insecure remote RPC URLs", () => {
+  const result = runVerifier(false, { RPC_URL: "http://rpc.example.invalid" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /RPC_URL must use HTTPS/);
 });

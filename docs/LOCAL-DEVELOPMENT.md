@@ -48,6 +48,16 @@ Open <http://localhost:3000>. The script prints the deployed addresses, seeds a 
 and writes the matching `NEXT_PUBLIC_*` values to `app/.env.local`. Press `Ctrl-C` to stop both
 processes and restore the previous environment file.
 
+If the default local ports are already in use, override them without changing the deployment
+configuration:
+
+```shell
+ANVIL_PORT=18545 APP_PORT=3001 ./scripts/local-demo.sh
+```
+
+`ANVIL_PORT` defaults to `8545` and `APP_PORT` defaults to `3000`; both must be distinct integers
+from `1` through `65535`, and both listeners stay bound to `127.0.0.1` for this disposable demo.
+
 The local demo intentionally assigns both vesting beneficiaries to the funded Anvil broadcaster.
 That is convenient for a disposable demo, but it is not an acceptable production custody model.
 The production deployment and verification paths reject deployer-controlled beneficiaries.
