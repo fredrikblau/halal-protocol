@@ -18,14 +18,15 @@ it — that's exactly the kind of tribal knowledge this file is for.
 The planning docs describe the 6,000,000 HLC team allocation and 4,000,000 HLC treasury
 allocation as if they simply exist from deployment (see `docs/TECHNICAL-DOCS.md`'s DAO
 constructor walkthrough, which doesn't mention a separate mint step). The actual
-[`HalalToken`](../contracts/src/HalalToken.sol) constructor mints nothing — it only grants
-`DEFAULT_ADMIN_ROLE` and `MINTER_ROLE` to the deployer-controlled `admin` address:
+[`HalalToken`](../contracts/src/HalalToken.sol) constructor mints nothing — it grants only
+`DEFAULT_ADMIN_ROLE` to the deployer-controlled `admin` address. The deployer is deliberately not
+a minter; the deployment script grants `MINTER_ROLE` directly to the PSM before relinquishing
+admin control:
 
 ```solidity
 constructor(address admin) ERC20("Halal", "HLC") ERC20Permit("Halal") {
     if (admin == address(0)) revert ZeroAddress();
     _grantRole(DEFAULT_ADMIN_ROLE, admin);
-    _grantRole(MINTER_ROLE, admin);
 }
 ```
 
@@ -244,3 +245,10 @@ kill switch," and this system doesn't have the latter. If a future version of th
 one, that's a deliberate governance-model change (e.g. a DAO-elected, term-limited, narrowly-scoped
 guardian committee) worth its own proposal and discussion, not a role grant slipped in as if it
 were already part of the design.
+
+## 7. Minting and burning roles require deployed modules
+
+`MINTER_ROLE` and `BURNER_ROLE` are module capabilities, not discretionary permissions for
+externally owned accounts. `HalalToken.grantRole` therefore rejects an EOA or undeployed address
+for either role. The PSM and any future accounting-aware module must be deployed before the DAO
+can authorize it; governance can revoke a compromised module without creating an EOA issuer.

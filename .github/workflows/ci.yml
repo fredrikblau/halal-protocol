@@ -209,6 +209,15 @@ jobs:
       - name: Shell syntax
         run: bash -n scripts/*.sh
 
+      - name: ShellCheck (pinned)
+        # Keep this toolchain pinned and scan only first-party shell entrypoints. The image digest
+        # makes the operational-script gate reproducible across hosted runners.
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE/scripts:/mnt:ro"
+          koalaman/shellcheck:v0.10.0@sha256:2097951f02e735b613f4a34de20c40f937a6c8f18ecb170612c88c34517221fb
+          /mnt/check-deployment-health.sh /mnt/check-psm-health.sh /mnt/local-adapter-demo.sh
+          /mnt/local-app-smoke.sh /mnt/local-demo.sh /mnt/verify-deployment.sh
+
       - name: Validate deployment registry
         run: node scripts/validate-deployment-registry.mjs
 
@@ -287,10 +296,14 @@ jobs:
         run: pnpm audit --prod --audit-level=high
 
       - name: Configured local dApp smoke test
-        run: cd .. && ./scripts/local-app-smoke.sh
+        # Bound the disposable Anvil/Next harness separately so a child-process hang produces a
+        # useful failure before the 30-minute job timeout.
+        run: timeout --signal=TERM --kill-after=30s 10m ../scripts/local-app-smoke.sh
 
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        # Browser downloads can stall independently of the test process on a hosted runner.
+        run: timeout --signal=TERM --kill-after=30s 10m pnpm exec playwright install --with-deps chromium
 
       - name: Browser permit-flow test
-        run: pnpm test:e2e
+        # Keep a hung browser or child server from leaving a required check pending indefinitely.
+        run: timeout --signal=TERM --kill-after=30s 15m pnpm test:e2e

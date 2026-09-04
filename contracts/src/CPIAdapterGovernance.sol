@@ -24,7 +24,10 @@ library CPIAdapterGovernance {
         bool hasNonWhitespace;
         for (uint256 i = 0; i < sourceBytes.length; ++i) {
             bytes1 character = sourceBytes[i];
-            if (character != 0x09 && character != 0x0a && character != 0x0d && character != 0x20) {
+            if (
+                character != 0x09 && character != 0x0a && character != 0x0b && character != 0x0c && character != 0x0d
+                    && character != 0x20
+            ) {
                 hasNonWhitespace = true;
                 break;
             }

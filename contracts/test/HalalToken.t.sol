@@ -29,6 +29,12 @@ contract HalalTokenTest is Deployers {
         freshToken.initialMint(address(0xBEEF), address(0xBEEF));
     }
 
+    function test_RevertWhen_GenesisVestingRecipientIsNotContract() public {
+        HalalToken freshToken = new HalalToken(address(this));
+        vm.expectRevert(HalalToken.NotContract.selector);
+        freshToken.initialMint(address(0xBEEF), address(0xCAFE));
+    }
+
     function test_DeployerHasNoRolesAfterSetup() public view {
         assertFalse(token.hasRole(token.DEFAULT_ADMIN_ROLE(), deployer));
         assertFalse(token.hasRole(token.MINTER_ROLE(), deployer));
@@ -65,6 +71,17 @@ contract HalalTokenTest is Deployers {
         assertEq(token.balanceOf(address(0xCAFE)), 500e18);
     }
 
+    function test_RevertWhen_MintOrBurnRoleTargetsEOA() public {
+        bytes32 minterRole = token.MINTER_ROLE();
+        bytes32 burnerRole = token.BURNER_ROLE();
+        vm.startPrank(address(timelock));
+        vm.expectRevert(HalalToken.RoleRecipientNotContract.selector);
+        token.grantRole(minterRole, address(0xCAFE));
+        vm.expectRevert(HalalToken.RoleRecipientNotContract.selector);
+        token.grantRole(burnerRole, address(0xCAFE));
+        vm.stopPrank();
+    }
+
     function test_PsmCanBurnItsOwnTokens() public {
         vm.prank(address(psm));
         token.burn(0);
@@ -78,6 +95,12 @@ contract HalalTokenTest is Deployers {
     function test_RevertWhen_ZeroAdminAtDeploy() public {
         vm.expectRevert(HalalToken.ZeroAddress.selector);
         new HalalToken(address(0));
+    }
+
+    function test_ConstructorAdminIsNotADeployerMinter() public {
+        HalalToken freshToken = new HalalToken(address(this));
+        vm.expectRevert();
+        freshToken.mint(address(0xCAFE), 1e18);
     }
 
     function test_PermitApproval() public {
