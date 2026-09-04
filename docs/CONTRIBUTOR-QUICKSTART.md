@@ -9,7 +9,7 @@ before searching through the full contract sources.
 ## 1. Clone and verify the toolchain
 
 ```shell
-git clone https://github.com/fredrikblau/halal-protocol.git
+git clone --recurse-submodules https://github.com/fredrikblau/halal-protocol.git
 cd halal-protocol
 node --version       # 22 or newer
 pnpm --version       # 11
@@ -18,6 +18,10 @@ anvil --version
 cast --version
 pnpm --dir app install --frozen-lockfile
 ```
+
+The `--recurse-submodules` flag is required because the Foundry project pins OpenZeppelin and
+forge-std as Git submodules. If you already cloned without it, initialize the same dependencies
+with `git submodule update --init --recursive` before running any contract or local-demo command.
 
 ## 2. See the complete protocol locally
 
