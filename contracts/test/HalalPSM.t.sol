@@ -174,7 +174,11 @@ contract HalalPSMTest is Deployers {
     }
 
     function testFuzz_RoundTripNeverOverpays(uint128 reserveAmount) public {
-        vm.assume(reserveAmount >= 1e12 && reserveAmount <= 1e24);
+        // Bound the generated value instead of rejecting almost every uint128 sample. The old
+        // assume-based range had a probability of roughly 1 in 2^48 of accepting an arbitrary
+        // uint128 input, so higher fuzz-run counts could exhaust Foundry's assume-rejection cap
+        // before exercising the property.
+        reserveAmount = uint128(bound(uint256(reserveAmount), 1e12, 1e24));
 
         vm.prank(address(timelock));
         psm.mockCPI(1_100_000);

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -11,6 +11,7 @@ import { preflightDeploymentRegistry } from "../preflight-deployment.mjs";
 const root = fileURLToPath(new URL("../../", import.meta.url));
 const validator = join(root, "scripts/validate-deployment-registry.mjs");
 const preflight = join(root, "scripts/preflight-deployment.mjs");
+const recorder = join(root, "scripts/record-deployment-manifest.mjs");
 
 function deployment(overrides = {}) {
   return {
@@ -64,9 +65,100 @@ async function runPreflight(contents, args = []) {
   return result;
 }
 
+async function runRecorder(withAdapter) {
+  const directory = await mkdtemp(join(tmpdir(), "halal-recorder-"));
+  const fakeCast = join(directory, "cast");
+  const fakeBash = join(directory, "bash");
+  const output = join(directory, "registry.json");
+  await writeFile(output, "{}\n");
+  await writeFile(
+    fakeCast,
+    `#!/usr/bin/bash
+set -euo pipefail
+case "\$1" in
+  receipt) echo '{"transactionHash":"0x${"1".repeat(64)}","blockNumber":"0x64","status":"0x1"}' ;;
+  block) echo 0x70 ;;
+  *) echo "unexpected fake cast command: \$*" >&2; exit 1 ;;
+esac
+`,
+  );
+  await writeFile(
+    fakeBash,
+    `#!/usr/bin/bash
+set -euo pipefail
+if [[ "\$1" == *verify-deployment.sh ]]; then
+  echo "fake deployment verifier passed"
+  exit 0
+fi
+exec /usr/bin/bash "\$@"
+`,
+  );
+  await chmod(fakeCast, 0o755);
+  await chmod(fakeBash, 0o755);
+
+  const env = {
+    ...process.env,
+    PATH: `${directory}:${process.env.PATH}`,
+    RPC_URL: "http://fake-rpc.invalid",
+    EXPECTED_CHAIN_ID: "421614",
+    TOKEN: `0x${"1".repeat(40)}`,
+    TEAM_VESTING: `0x${"2".repeat(40)}`,
+    TREASURY_VESTING: `0x${"3".repeat(40)}`,
+    DAO: `0x${"4".repeat(40)}`,
+    PSM: `0x${"5".repeat(40)}`,
+    TIMELOCK: `0x${"6".repeat(40)}`,
+    RESERVE_TOKEN: `0x${"7".repeat(40)}`,
+    RESERVE_SYMBOL: "USDC",
+    DEPLOYMENT_BLOCK: "100",
+    TEAM_BENEFICIARY: `0x${"8".repeat(40)}`,
+    TREASURY_BENEFICIARY: `0x${"9".repeat(40)}`,
+    DEPLOYER_ADDRESS: `0x${"a".repeat(40)}`,
+    ...(withAdapter
+      ? {
+          CPI_ADAPTER: `0x${"b".repeat(40)}`,
+          EXPECTED_CPI_SOURCE: "BLS:CUUR0000SA0",
+          EXPECTED_CPI_SOURCE_ID: `0x${"c".repeat(64)}`,
+          CPI_POLICY_URL: "https://example.com/cpi-policy",
+        }
+      : {}),
+  };
+  const result = spawnSync(
+    process.execPath,
+    [recorder, "--chain-id", "421614", "--network", "arbitrum-sepolia", "--release", "v0.1.0-test", "--commit", "d".repeat(40), "--deployment-tx", `0x${"1".repeat(64)}`, "--explorer-url", "https://example.com/tx/1", "--source-url", "https://example.com/address/1#code", "--journal-url", "https://example.com/journal/1", "--output", output],
+    { cwd: root, env, encoding: "utf8" },
+  );
+  const recorded = result.status === 0 ? JSON.parse(await readFile(output, "utf8")) : null;
+  await rm(directory, { recursive: true, force: true });
+  return { result, recorded };
+}
+
 test("accepts a complete registry entry with governed CPI adapter metadata", async () => {
   const result = await runValidator(deployment());
   assert.equal(result.status, 0, result.stderr);
+});
+
+test("records governed CPI source metadata and preserves the full manifest round trip", async () => {
+  const { result, recorded } = await runRecorder(true);
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  const entry = recorded["421614"];
+  assert.equal(entry.cpiSource, "BLS:CUUR0000SA0");
+  assert.equal(entry.cpiSourceId, `0x${"c".repeat(64)}`);
+  assert.equal(entry.cpiPolicyUrl, "https://example.com/cpi-policy");
+  assert.equal(entry.psm, `0x${"5".repeat(40)}`);
+
+  const validation = await runValidator(entry, "421614");
+  assert.equal(validation.status, 0, validation.stderr);
+});
+
+test("records the core manifest without adapter metadata", async () => {
+  const { result, recorded } = await runRecorder(false);
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+  const entry = recorded["421614"];
+  assert.equal(entry.reserveTokenSymbol, "USDC");
+  assert.equal(entry.cpiAdapter, undefined);
+
+  const validation = await runValidator(entry, "421614");
+  assert.equal(validation.status, 0, validation.stderr);
 });
 
 test("rejects a zero CPI source ID", async () => {
