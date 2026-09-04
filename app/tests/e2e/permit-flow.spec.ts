@@ -349,6 +349,37 @@ test("renders deployment health without a wallet provider", async ({ page }) => 
   await expect(page.getByRole("link", { name: "Open protocol dashboard" })).toHaveAttribute("href", "/");
 });
 
+test("fails closed when a previously verified integrity refresh fails", async ({ page }) => {
+  const env = readLocalEnv();
+  const daoAddress = env.NEXT_PUBLIC_HLC_DAO_31337.toLowerCase();
+  let failRefresh = false;
+
+  await page.route(/127\.0\.0\.1:18545/, async (route) => {
+    const request = route.request();
+    const body = request.postDataJSON() as { method?: string; params?: Array<{ to?: string }> };
+    const call = body.params?.[0];
+    if (failRefresh && body.method === "eth_call" && call?.to?.toLowerCase() === daoAddress) {
+      await route.abort("connectionreset");
+      return;
+    }
+    await route.continue();
+  });
+
+  await installAnvilProvider(page);
+  await page.goto("/governance/new");
+  await expect(page.getByRole("heading", { name: "New Proposal" })).toBeVisible();
+  await expect(page.getByText("Connect your wallet to create a proposal.")).toBeVisible();
+  await expect(page.getByText("Deployment configuration could not be verified")).toHaveCount(0);
+
+  // Integrity verification refreshes every 30 seconds. Cached values must not keep proposal
+  // signing enabled after the next complete contract-graph read fails.
+  failRefresh = true;
+  await expect
+    .poll(() => page.getByText("Deployment configuration could not be verified").count(), { timeout: 45_000 })
+    .toBeGreaterThan(0);
+  await expect(page.getByRole("button", { name: "Submit proposal" })).toBeDisabled();
+});
+
 test("explains a supported network with no configured deployment", async ({ page }) => {
   await installAnvilProvider(page, 421_614);
   await page.goto("/health");
