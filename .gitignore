@@ -18,6 +18,14 @@ app/.next/
 app/.env*.local
 !app/.env.example
 
+# ── Local deployment credentials and evidence ───────────────────────────
+# Keep copied deployment environment files and disposable smoke-test output out of commits. A
+# reviewed public deployment record may still be committed outside evidence/local/ when it is
+# intentionally prepared and scrubbed for publication.
+contracts/.env
+contracts/.env.local
+evidence/local/
+
 # ── OS / editor cruft ────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
