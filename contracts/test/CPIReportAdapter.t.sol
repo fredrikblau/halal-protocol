@@ -311,11 +311,21 @@ contract CPIReportAdapterTest is Test {
         uint256 reportedAt = block.timestamp - psm.MAX_REPORT_AGE() - 1;
         bytes[] memory signatures = _signReportFor(psmAdapter, 1_000_000, reportedAt, SIGNER_ONE_KEY, SIGNER_TWO_KEY);
 
-        vm.expectRevert(HalalPSM.ReportTooOld.selector);
+        vm.expectRevert(CPIReportAdapter.ReportTooOld.selector);
         psmAdapter.submitReport(1_000_000, reportedAt, signatures);
 
         assertEq(psm.lastReportTimestamp(), 0);
         assertEq(psmAdapter.lastSubmittedTimestamp(), 0);
+    }
+
+    function test_AcceptsReportAtInclusiveFreshnessBoundary() public {
+        uint256 reportedAt = block.timestamp - adapter.MAX_REPORT_AGE();
+        bytes[] memory signatures = _signReport(1_000_000, reportedAt, SIGNER_ONE_KEY, SIGNER_TWO_KEY);
+
+        adapter.submitReport(1_000_000, reportedAt, signatures);
+
+        assertEq(sink.lastReportTimestamp(), reportedAt);
+        assertEq(adapter.lastSubmittedTimestamp(), reportedAt);
     }
 
     function test_RevertWhen_SinkRejectsOutOfRangeReport() public {
