@@ -5,7 +5,7 @@
 [![Slither](https://github.com/fredrikblau/halal-protocol/actions/workflows/slither.yml/badge.svg)](https://github.com/fredrikblau/halal-protocol/actions/workflows/slither.yml)
 [![Deep contract tests](https://github.com/fredrikblau/halal-protocol/actions/workflows/deep-tests.yml/badge.svg)](https://github.com/fredrikblau/halal-protocol/actions/workflows/deep-tests.yml)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/fredrikblau/halal-protocol/badge)](https://securityscorecards.dev/viewer/?uri=github.com/fredrikblau/halal-protocol)
-[![Latest release](https://img.shields.io/github/v/release/fredrikblau/halal-protocol?include_prereleases&label=latest%20release)](https://github.com/fredrikblau/halal-protocol/releases)
+[![Latest preview](https://img.shields.io/github/v/release/fredrikblau/halal-protocol?include_prereleases&label=latest%20preview)](https://github.com/fredrikblau/halal-protocol/releases)
 [![GitHub stars](https://img.shields.io/github/stars/fredrikblau/halal-protocol?style=social)](https://github.com/fredrikblau/halal-protocol/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/fredrikblau/halal-protocol?style=social)](https://github.com/fredrikblau/halal-protocol/network/members)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -160,6 +160,8 @@ walkthrough, and the exact API surface — see:
   number or behavior described in the docs above is exactly what the code does.
 - [`docs/THREAT-MODEL.md`](docs/THREAT-MODEL.md) — assets, trust boundaries, attack scenarios,
   mitigations, and unresolved risks for reviewers and deployment operators.
+- [`docs/SECURITY-REVIEW-QUICKSTART.md`](docs/SECURITY-REVIEW-QUICKSTART.md) — reproducible
+  security-review commands, bounded review questions, evidence expectations, and safe reporting.
 - [`docs/OPERATOR-RUNBOOK.md`](docs/OPERATOR-RUNBOOK.md) — launch acceptance, monitoring, CPI
   updater operations, governance review, and incident response.
 - [`scripts/verify-governance-payload.mjs`](scripts/verify-governance-payload.mjs) — offline,
@@ -176,6 +178,8 @@ walkthrough, and the exact API surface — see:
   worksheet for operational failures and recovery evidence.
 - [`docs/CONTRIBUTOR-MAP.md`](docs/CONTRIBUTOR-MAP.md) — concrete contribution paths for security,
   oracle integrations, monitoring, economics, governance, dApp UX, and documentation.
+- [`docs/GLOSSARY.md`](docs/GLOSSARY.md) — concise definitions of the protocol terms used by the
+  contracts, documentation, and contributor issues.
 - [`docs/LOCAL-CPI-REPORT-WALKTHROUGH.md`](docs/LOCAL-CPI-REPORT-WALKTHROUGH.md) — copy-paste local
   CPI report preparation and verification lifecycle.
 - [Security review challenge #16](https://github.com/fredrikblau/halal-protocol/issues/16) — a bounded
