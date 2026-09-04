@@ -1,5 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { countInvariantFunctions, parseFoundryJson, parseFoundrySummary, validateCurrentDocumentation } from "../check-test-counts.mjs";
 
 const SUMMARY = `
@@ -51,10 +54,35 @@ test("counts individual invariant results from Foundry JSON", () => {
 });
 
 test("counts invariant declarations independently of Foundry suite reporting", () => {
-  assert.equal(
-    countInvariantFunctions("contracts/test"),
-    11,
-  );
+  // Count against a fixture tree rather than the live suite: asserting a literal against
+  // contracts/test made this test fail every time a real invariant was added, which is the
+  // documentation drift this tool exists to prevent.
+  const root = mkdtempSync(path.join(tmpdir(), "invariant-count-"));
+  try {
+    mkdirSync(path.join(root, "nested"), { recursive: true });
+    writeFileSync(
+      path.join(root, "First.t.sol"),
+      "contract A {\n  function invariant_one() public {}\n  function invariant_two() public {}\n  function testNotAnInvariant() public {}\n}\n",
+    );
+    writeFileSync(
+      path.join(root, "nested", "Second.t.sol"),
+      "contract B {\n  function invariant_three() public {}\n}\n",
+    );
+    writeFileSync(path.join(root, "notes.md"), "function invariant_ignored() {}\n");
+    assert.equal(countInvariantFunctions(root), 3);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+test("rejects a test tree with no invariant declarations", () => {
+  const root = mkdtempSync(path.join(tmpdir(), "invariant-empty-"));
+  try {
+    writeFileSync(path.join(root, "Empty.t.sol"), "contract C {}\n");
+    assert.throws(() => countInvariantFunctions(root), /could not find invariant functions/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test("accepts synchronized documentation counts", () => {
