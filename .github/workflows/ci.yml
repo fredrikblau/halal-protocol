@@ -163,7 +163,7 @@ jobs:
         run: forge build --force
 
       - name: Install pnpm
-        uses: pnpm/action-setup@f520eceda224fe1a4aed5a2a27a194379a409996 # v6
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
           version: 11.23.0
 
@@ -204,6 +204,15 @@ jobs:
 
       - name: Shell syntax
         run: bash -n scripts/*.sh
+
+      - name: ShellCheck (pinned)
+        # Keep this toolchain pinned and scan only first-party shell entrypoints. The image digest
+        # makes the operational-script gate reproducible across hosted runners.
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE/scripts:/mnt:ro"
+          koalaman/shellcheck:v0.10.0@sha256:2097951f02e735b613f4a34de20c40f937a6c8f18ecb170612c88c34517221fb
+          /mnt/check-deployment-health.sh /mnt/check-psm-health.sh /mnt/local-adapter-demo.sh
+          /mnt/local-app-smoke.sh /mnt/local-demo.sh /mnt/verify-deployment.sh
 
       - name: Validate deployment registry
         run: node scripts/validate-deployment-registry.mjs
@@ -251,7 +260,7 @@ jobs:
         uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1
 
       - name: Install pnpm
-        uses: pnpm/action-setup@f520eceda224fe1a4aed5a2a27a194379a409996 # v6
+        uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
           version: 11.23.0
 

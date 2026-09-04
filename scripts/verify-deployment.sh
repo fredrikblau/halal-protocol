@@ -21,6 +21,15 @@ done
 
 command -v cast >/dev/null || { echo "cast is required (install Foundry first)" >&2; exit 1; }
 
+case "$RPC_URL" in
+  https://*) ;;
+  http://127.0.0.1:*|http://localhost:*|http://\[::1\]:*) ;;
+  *)
+    echo "RPC_URL must use HTTPS, or loopback HTTP for a disposable local demo" >&2
+    exit 1
+    ;;
+esac
+
 call() {
   # Foundry may append a human-readable scientific-notation rendering to large integers.
   # Keep the canonical first field so exact checks remain stable across cast versions.
@@ -136,6 +145,22 @@ if [[ "${ALLOW_DEPLOYER_BENEFICIARY:-false}" != "true" && (
   exit 1
 fi
 
+if [[ "${ALLOW_DEPLOYER_BENEFICIARY:-false}" != "true" && "$TEAM_BENEFICIARY" == "$TREASURY_BENEFICIARY" ]]; then
+  echo "FAILED: production team and treasury beneficiaries must be distinct" >&2
+  exit 1
+fi
+
+if [[ "${ALLOW_DEPLOYER_BENEFICIARY:-false}" == "true" ]]; then
+  if [[ "$EXPECTED_CHAIN_ID" != "31337" ]]; then
+    echo "FAILED: ALLOW_DEPLOYER_BENEFICIARY=true is restricted to Anvil chain 31337" >&2
+    exit 1
+  fi
+  case "$RPC_URL" in
+    http://127.0.0.1:*|http://localhost:*|http://\[::1\]:*) ;;
+    *) echo "FAILED: ALLOW_DEPLOYER_BENEFICIARY=true requires a loopback HTTP RPC" >&2; exit 1 ;;
+  esac
+fi
+
 expect_contract "timelock" "$TIMELOCK"
 expect_contract "token" "$TOKEN"
 expect_contract "team vesting" "$TEAM_VESTING"
@@ -143,6 +168,10 @@ expect_contract "treasury vesting" "$TREASURY_VESTING"
 expect_contract "DAO" "$DAO"
 expect_contract "PSM" "$PSM"
 expect_contract "reserve token" "$RESERVE_TOKEN"
+if [[ "${ALLOW_DEPLOYER_BENEFICIARY:-false}" != "true" ]]; then
+  expect_contract "team beneficiary" "$TEAM_BENEFICIARY"
+  expect_contract "treasury beneficiary" "$TREASURY_BENEFICIARY"
+fi
 
 expect_equal "PSM reserve" "$(address_call "$PSM" 'reserve()(address)')" "$RESERVE_TOKEN"
 expect_equal "PSM HLC token" "$(address_call "$PSM" 'hlc()(address)')" "$TOKEN"
@@ -197,6 +226,7 @@ fi
 
 if [[ -n "${CPI_ADAPTER:-}" ]]; then
   expect_contract "CPI adapter" "$CPI_ADAPTER"
+  expect_contract "CPI adapter owner" "$EXPECTED_CPI_ADAPTER_OWNER"
   expect_equal "CPI adapter PSM" "$(address_call "$CPI_ADAPTER" 'psm()(address)')" "$PSM"
   expect_equal "CPI adapter owner" "$(address_call "$CPI_ADAPTER" 'owner()(address)')" "$EXPECTED_CPI_ADAPTER_OWNER"
   expect_equal "CPI adapter source ID" "$(address_call "$CPI_ADAPTER" 'sourceId()(bytes32)')" "$EXPECTED_CPI_SOURCE_ID"

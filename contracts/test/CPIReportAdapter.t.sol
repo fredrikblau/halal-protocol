@@ -190,6 +190,15 @@ contract CPIReportAdapterTest is Test {
         bytes[] memory signatures = _signReport(1_010_000, reportedAt, SIGNER_ONE_KEY, replacementKey);
         adapter.submitReport(1_010_000, reportedAt, signatures);
         assertEq(sink.lastCPI(), 1_010_000);
+
+        vm.expectRevert(CPIReportAdapter.SignerAlreadyConfigured.selector);
+        adapter.addSigner(replacement);
+
+        address newOwner = address(0xCAFE);
+        adapter.transferOwnership(newOwner);
+        vm.prank(newOwner);
+        adapter.acceptOwnership();
+        assertEq(adapter.owner(), newOwner);
     }
 
     function test_RevertWhen_ConstructorSignerIsOwner() public {
@@ -404,6 +413,15 @@ contract CPIReportAdapterTest is Test {
         CPIAdapterGovernanceHarness harness = new CPIAdapterGovernanceHarness();
         vm.expectRevert(CPIAdapterGovernance.EmptySource.selector);
         harness.buildHandoff(address(sink), address(adapter), " \t\n", address(0));
+    }
+
+    function test_RevertWhen_HandoffSourceIsFormFeedOrVerticalTabOnly() public {
+        CPIAdapterGovernanceHarness harness = new CPIAdapterGovernanceHarness();
+        vm.expectRevert(CPIAdapterGovernance.EmptySource.selector);
+        harness.buildHandoff(address(sink), address(adapter), string(abi.encodePacked(bytes1(0x0b))), address(0));
+
+        vm.expectRevert(CPIAdapterGovernance.EmptySource.selector);
+        harness.buildHandoff(address(sink), address(adapter), string(abi.encodePacked(bytes1(0x0c))), address(0));
     }
 
     function _signReport(uint256 reportedCPI, uint256 reportedAt, uint256 firstKey)

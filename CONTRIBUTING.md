@@ -20,7 +20,24 @@ bar than a typical app repo — see the [roadmap](docs/ROADMAP.md) and [Changes 
 New to the repository? Follow the [ten-minute contributor quickstart](docs/CONTRIBUTOR-QUICKSTART.md)
 for the clean-clone tool check, disposable local smoke test, and first contribution path.
 
-1. Fork the repository and clone your fork.
+### Current starter issues
+
+These tasks are intentionally bounded and do not require a wallet, private key, RPC credential,
+deployment, or real funds:
+
+- [#118 — verify the clean-clone quickstart on another environment](https://github.com/fredrikblau/halal-protocol/issues/118)
+- [#166 — add fail-closed deployment-manifest tests](https://github.com/fredrikblau/halal-protocol/issues/166)
+- [#173 — cover CPI adapter configuration and ownership boundaries](https://github.com/fredrikblau/halal-protocol/issues/173)
+
+The CPI source-policy task is already claimed in [PR #169](https://github.com/fredrikblau/halal-protocol/pull/169).
+Review or improve that PR rather than opening a duplicate.
+
+Read the issue acceptance criteria, comment with your intended approach, and open a focused PR.
+If a task is already claimed or has an active contributor PR, choose another starter issue or
+help review the existing work instead of duplicating it.
+
+1. Fork the repository and clone your fork with `git clone --recurse-submodules`; if the clone
+   already exists, run `git submodule update --init --recursive`.
 2. Create a topic branch off `main`: `git checkout -b feat/short-description`.
 3. Make your changes, following the code style and testing expectations below.
 4. Push your branch to your fork and open a pull request against `main` on the upstream repo.
@@ -30,10 +47,15 @@ for the clean-clone tool check, disposable local smoke test, and first contribut
    satisfied.
 
 The `main` branch is protected: changes must arrive through a pull request, receive one approval
-from the code owner, pass path detection plus every applicable Contracts, Scripts, generated-ABI, and
+and, when covered by `CODEOWNERS`, approval from the listed owner. They must also pass path
+detection plus every applicable Contracts, Scripts, generated-ABI, and
 Frontend CI check, use linear history, and resolve review conversations. Path-filtered jobs are
 skipped safely for unrelated documentation changes. Administrators may bypass the rule for repository
 recovery, but normal development should use the review path.
+
+`CODEOWNERS` requests maintainer review for deployed Solidity, deployment scripts, repository
+scripts, and GitHub Actions. Documentation, frontend, and test-only changes are intentionally open
+to outside reviewers; the branch still requires one approval and all applicable checks.
 
 The protected checks also include Slither static analysis, extended fuzzing/invariants, and both
 CodeQL language analyses. Dependency review and OpenSSF Scorecard remain visible advisory workflows;

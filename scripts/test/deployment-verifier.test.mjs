@@ -29,8 +29,8 @@ function fakeCastScript() {
   return `#!/usr/bin/env bash
 set -euo pipefail
 case "$1" in
-  chain-id) echo 421614 ;;
-  code) echo 0x1234 ;;
+  chain-id) echo "\${FAKE_CHAIN_ID:-421614}" ;;
+  code) [[ -n "\${FAKE_EOA:-}" && "$2" == "$FAKE_EOA" ]] && echo 0x || echo 0x1234 ;;
   call)
     target="$2"
     signature="$3"
@@ -80,7 +80,7 @@ function runVerifier(withAdapter, overrides = {}) {
   const env = {
     ...process.env,
     PATH: `${directory}:${process.env.PATH}`,
-    RPC_URL: "http://fake-rpc.invalid",
+    RPC_URL: "https://fake-rpc.invalid",
     EXPECTED_CHAIN_ID: "421614",
     TIMELOCK: ADDRESSES.timelock,
     TOKEN: ADDRESSES.token,
@@ -135,4 +135,50 @@ test("deployment verifier rejects a changed PSM CPI source label", () => {
   const result = runVerifier(true, { EXPECTED_CPI_SOURCE: "different-source" });
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /PSM CPI source/);
+});
+
+test("deployment verifier rejects shared production beneficiaries", () => {
+  const result = runVerifier(false, {
+    TEAM_BENEFICIARY: ADDRESSES.teamBeneficiary,
+    TREASURY_BENEFICIARY: ADDRESSES.teamBeneficiary,
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /team and treasury beneficiaries must be distinct/);
+});
+
+test("deployment verifier rejects EOA production beneficiaries", () => {
+  const result = runVerifier(false, { FAKE_EOA: ADDRESSES.teamBeneficiary });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /team beneficiary has no deployed contract bytecode/);
+});
+
+test("deployment verifier rejects an EOA CPI adapter owner", () => {
+  const result = runVerifier(true, {
+    FAKE_EOA: ADDRESSES.signerOne,
+    EXPECTED_CPI_ADAPTER_OWNER: ADDRESSES.signerOne,
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /CPI adapter owner has no deployed contract bytecode/);
+});
+
+test("deployment verifier rejects the local beneficiary escape hatch on a remote chain", () => {
+  const result = runVerifier(false, { ALLOW_DEPLOYER_BENEFICIARY: "true" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /restricted to Anvil chain 31337/);
+});
+
+test("deployment verifier permits the beneficiary escape hatch only on loopback Anvil", () => {
+  const result = runVerifier(false, {
+    ALLOW_DEPLOYER_BENEFICIARY: "true",
+    EXPECTED_CHAIN_ID: "31337",
+    FAKE_CHAIN_ID: "31337",
+    RPC_URL: "http://127.0.0.1:8545",
+  });
+  assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+});
+
+test("deployment verifier rejects insecure remote RPC URLs", () => {
+  const result = runVerifier(false, { RPC_URL: "http://rpc.example.invalid" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /RPC_URL must use HTTPS/);
 });

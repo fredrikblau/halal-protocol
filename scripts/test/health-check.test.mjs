@@ -161,6 +161,78 @@ test("configured CPI adapter rejects a changed PSM source label", () => {
   assert.match(result.output, /^reason=cpi_source_mismatch$/m);
 });
 
+test("configured CPI adapter rejects a mismatched PSM address", () => {
+  const result = runPsmHealthWithFakeCast({
+    CPI_ADAPTER: "0x0000000000000000000000000000000000000004",
+    EXPECTED_CPI_ADAPTER_OWNER: "0x0000000000000000000000000000000000000002",
+    EXPECTED_CPI_SOURCE: "BLS-CPI",
+    EXPECTED_CPI_SOURCE_ID: `0x${"a".repeat(64)}`,
+    adapterPsm: "0x0000000000000000000000000000000000000005",
+  });
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /^reason=cpi_adapter_psm_mismatch$/m);
+});
+
+test("configured CPI adapter rejects an unexpected owner", () => {
+  const result = runPsmHealthWithFakeCast({
+    CPI_ADAPTER: "0x0000000000000000000000000000000000000004",
+    EXPECTED_CPI_ADAPTER_OWNER: "0x0000000000000000000000000000000000000006",
+    EXPECTED_CPI_SOURCE: "BLS-CPI",
+    EXPECTED_CPI_SOURCE_ID: `0x${"a".repeat(64)}`,
+  });
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /^reason=cpi_adapter_owner_mismatch$/m);
+});
+
+test("configured CPI adapter rejects an invalid quorum", () => {
+  const result = runPsmHealthWithFakeCast({
+    CPI_ADAPTER: "0x0000000000000000000000000000000000000004",
+    EXPECTED_CPI_ADAPTER_OWNER: "0x0000000000000000000000000000000000000002",
+    EXPECTED_CPI_SOURCE: "BLS-CPI",
+    EXPECTED_CPI_SOURCE_ID: `0x${"a".repeat(64)}`,
+    adapterThreshold: "2",
+    adapterSignerCount: "1",
+  });
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /^reason=cpi_adapter_quorum_invalid$/m);
+});
+
+test("configured CPI adapter rejects signer-owner overlap", () => {
+  const result = runPsmHealthWithFakeCast({
+    CPI_ADAPTER: "0x0000000000000000000000000000000000000004",
+    EXPECTED_CPI_ADAPTER_OWNER: "0x0000000000000000000000000000000000000002",
+    EXPECTED_CPI_SOURCE: "BLS-CPI",
+    EXPECTED_CPI_SOURCE_ID: `0x${"a".repeat(64)}`,
+    adapterSigner: "0x0000000000000000000000000000000000000002",
+  });
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /^reason=cpi_adapter_signer_owner_overlap$/m);
+});
+
+test("configured CPI adapter rejects duplicate signers", () => {
+  const result = runPsmHealthWithFakeCast({
+    CPI_ADAPTER: "0x0000000000000000000000000000000000000004",
+    EXPECTED_CPI_ADAPTER_OWNER: "0x0000000000000000000000000000000000000002",
+    EXPECTED_CPI_SOURCE: "BLS-CPI",
+    EXPECTED_CPI_SOURCE_ID: `0x${"a".repeat(64)}`,
+    adapterSignerCount: "2",
+  });
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /^reason=cpi_adapter_signer_duplicate$/m);
+});
+
+test("configured CPI adapter rejects a report watermark mismatch", () => {
+  const result = runPsmHealthWithFakeCast({
+    CPI_ADAPTER: "0x0000000000000000000000000000000000000004",
+    EXPECTED_CPI_ADAPTER_OWNER: "0x0000000000000000000000000000000000000002",
+    EXPECTED_CPI_SOURCE: "BLS-CPI",
+    EXPECTED_CPI_SOURCE_ID: `0x${"a".repeat(64)}`,
+    adapterLastSubmitted: "899",
+  });
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /^reason=cpi_adapter_watermark_mismatch$/m);
+});
+
 test("standalone PSM health check reports stale CPI data", () => {
   const result = runPsmHealthWithFakeCast({ lastReportTimestamp: "700" });
   assert.notEqual(result.status, 0, result.output);
@@ -237,6 +309,19 @@ test("standalone PSM health check rejects an invalid overdue mode", () => {
   assert.notEqual(result.status, 0, result.output);
   assert.match(result.output, /^status=unhealthy$/m);
   assert.match(result.output, /^reason=invalid_fail_on_update_overdue$/m);
+});
+
+test("standalone PSM health check fails when the normal CPI update is overdue", () => {
+  const result = runPsmHealthWithFakeCast({ lastUpdated: "700", FAIL_ON_UPDATE_OVERDUE: "true" });
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /^warning=normal_cpi_update_overdue$/m);
+});
+
+test("standalone PSM health check can report an overdue update as a warning", () => {
+  const result = runPsmHealthWithFakeCast({ lastUpdated: "700", FAIL_ON_UPDATE_OVERDUE: "false" });
+  assert.equal(result.status, 0, result.output);
+  assert.match(result.output, /^warning=normal_cpi_update_overdue$/m);
+  assert.match(result.output, /^status=healthy$/m);
 });
 
 test("configured CPI adapter requires an expected source label", () => {

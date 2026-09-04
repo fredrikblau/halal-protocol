@@ -46,10 +46,13 @@ require_int() {
 require_bash_uint() {
   local label="$1"
   local value="$2"
-  local normalized="${value#${value%%[!0]*}}"
+  local normalized="${value#"${value%%[!0]*}"}"
   [[ -n "$normalized" ]] || normalized=0
   if (( ${#normalized} > 19 )) || {
-    (( ${#normalized} == 19 )) && [[ "$normalized" > "9223372036854775807" ]]
+    (( ${#normalized} == 19 )) && {
+      # shellcheck disable=SC2071 # Deliberate lexicographic comparison after length validation; arithmetic would overflow.
+      [[ "$normalized" > "9223372036854775807" ]]
+    }
   }; then
     unhealthy_input "${label}_range" "$value"
   fi
