@@ -35,9 +35,11 @@ export function CpiAdapterCard() {
     adapter.sourceId?.toLowerCase() === deployment.cpiSourceId?.toLowerCase();
   const reportSyncKnown = adapter.lastSubmittedTimestamp !== undefined && psm.lastReportTimestamp !== undefined;
   const reportSyncValid = reportSyncKnown && adapter.lastSubmittedTimestamp === psm.lastReportTimestamp;
+  const rateSyncKnown = adapter.lastSubmittedCPI !== undefined && psm.cpiRate !== undefined;
+  const rateSyncValid = rateSyncKnown && adapter.lastSubmittedCPI === psm.cpiRate;
   const isLoading = adapter.isLoading || psm.isLoading;
   const isError = adapter.isError || psm.isError;
-  const isVerified = !isError && quorumValid && wiringValid && reportSyncValid;
+  const isVerified = !isError && quorumValid && wiringValid && reportSyncValid && rateSyncValid;
 
   return (
     <Card>
@@ -83,6 +85,10 @@ export function CpiAdapterCard() {
                 <dt className="text-muted">PSM report watermark</dt>
                 <dd className="font-medium">{formatDate(psm.lastReportTimestamp)}</dd>
               </div>
+              <div>
+                <dt className="text-muted">Submitted CPI / PSM CPI</dt>
+                <dd className="font-medium">{adapter.lastSubmittedCPI?.toString() ?? "—"} / {psm.cpiRate?.toString() ?? "—"}</dd>
+              </div>
             </dl>
             <div className="rounded-xl bg-background-subtle p-3">
               <div className="flex items-center justify-between gap-3 text-xs">
@@ -101,7 +107,7 @@ export function CpiAdapterCard() {
               </div>
             </div>
             <p className="text-xs text-muted">
-              The adapter authenticates the configured signer quorum, and its report watermark should match the PSM.
+              The adapter authenticates the configured signer quorum, and its submitted CPI and report watermark should match the PSM.
               Source policy and signer custody still require independent operational review.
             </p>
           </>
