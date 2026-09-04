@@ -8,6 +8,7 @@ import { MockFeeOnTransferERC20 } from "./mocks/MockFeeOnTransferERC20.sol";
 import { MockFalseReturnERC20 } from "./mocks/MockFalseReturnERC20.sol";
 import { MockNoReturnERC20 } from "./mocks/MockNoReturnERC20.sol";
 import { MockTransferLimitERC20 } from "./mocks/MockTransferLimitERC20.sol";
+import { MockRebasingERC20 } from "./mocks/MockRebasingERC20.sol";
 import { Deployers } from "./utils/Deployers.sol";
 
 /// @notice Stateful actions for a reserve token that charges 1% on every user-to-user transfer.
@@ -312,6 +313,67 @@ contract TransferLimitReserveHandler is Test {
     }
 }
 
+/// @notice Stateful actions for a reserve whose issuer can change balances outside the PSM.
+/// A negative rebase may create a reserve deficit; the PSM must not make that deficit worse through
+/// a withdrawal, while HLC accounting remains conserved across successful operations.
+contract RebasingReserveHandler is Test {
+    HalalPSM internal immutable psm;
+    HalalToken internal immutable token;
+    MockRebasingERC20 internal immutable reserve;
+    address internal immutable alice;
+
+    constructor(HalalPSM psm_, HalalToken token_, MockRebasingERC20 reserve_, address alice_) {
+        psm = psm_;
+        token = token_;
+        reserve = reserve_;
+        alice = alice_;
+    }
+
+    function deposit(uint256 amountSeed) external {
+        uint256 amount = bound(amountSeed, 1, 1e24);
+        reserve.mint(alice, amount);
+        vm.startPrank(alice);
+        reserve.approve(address(psm), amount);
+        try psm.deposit(amount) { } catch { }
+        vm.stopPrank();
+    }
+
+    function withdraw(uint256 amountSeed) external {
+        uint256 credit = psm.redeemableBalance(alice);
+        uint256 balance = token.balanceOf(alice);
+        uint256 maximum = credit < balance ? credit : balance;
+        if (maximum == 0) return;
+
+        uint256 amount = bound(amountSeed, 1, maximum);
+        vm.startPrank(alice);
+        token.approve(address(psm), amount);
+        try psm.withdraw(amount) { } catch { }
+        vm.stopPrank();
+    }
+
+    function rebasePsm(uint256 amountSeed) external {
+        uint256 balance = reserve.balanceOf(address(psm));
+        if (amountSeed % 2 == 0) {
+            reserve.rebase(address(psm), int256(bound(amountSeed, 1, 1e24)));
+        } else if (balance != 0) {
+            reserve.rebase(address(psm), -int256(bound(amountSeed, 1, balance)));
+        }
+    }
+
+    function rebaseAlice(uint256 amountSeed) external {
+        uint256 balance = reserve.balanceOf(alice);
+        if (amountSeed % 2 == 0) {
+            reserve.rebase(alice, int256(bound(amountSeed, 1, 1e24)));
+        } else if (balance != 0) {
+            reserve.rebase(alice, -int256(bound(amountSeed, 1, balance)));
+        }
+    }
+
+    function knownRedeemableCredit() external view returns (uint256) {
+        return psm.redeemableBalance(alice);
+    }
+}
+
 contract HalalPSMAdversarialInvariantTest is Deployers {
     address internal feeAlice = makeAddr("feeInvariantAlice");
     address internal feeBob = makeAddr("feeInvariantBob");
@@ -451,5 +513,107 @@ contract HalalPSMTransferLimitReserveInvariantTest is Deployers {
 
     function invariant_TransferLimitSupplyDecomposition() public view {
         assertEq(token.totalSupply(), 10_000_000e18 + limitedPsm.totalHlcIssued());
+    }
+}
+
+contract HalalPSMRebasingReserveInvariantTest is Deployers {
+    address internal rebasingAlice = makeAddr("rebasingInvariantAlice");
+    MockRebasingERC20 internal rebasingReserve;
+    HalalPSM internal rebasingPsm;
+    RebasingReserveHandler internal rebasingHandler;
+
+    function setUp() public {
+        deployAll();
+        rebasingReserve = new MockRebasingERC20();
+        rebasingPsm = new HalalPSM(address(rebasingReserve), address(token), address(timelock), address(0xBEEF));
+        vm.startPrank(address(timelock));
+        token.grantRole(token.MINTER_ROLE(), address(rebasingPsm));
+        token.grantRole(token.BURNER_ROLE(), address(rebasingPsm));
+        vm.stopPrank();
+        vm.prank(address(0xBEEF));
+        rebasingPsm.updateCPI(1_000_000);
+
+        rebasingHandler = new RebasingReserveHandler(rebasingPsm, token, rebasingReserve, rebasingAlice);
+        targetContract(address(rebasingHandler));
+    }
+
+    function invariant_RebasingReserveCreditConservation() public view {
+        assertEq(rebasingHandler.knownRedeemableCredit(), rebasingPsm.totalHlcIssued());
+    }
+
+    function invariant_RebasingReserveTokenSupplyDecomposition() public view {
+        assertEq(token.totalSupply(), 10_000_000e18 + rebasingPsm.totalHlcIssued());
+    }
+}
+
+/// @notice Regression coverage for a reserve loss occurring between PSM operations.
+contract HalalPSMRebasingReserveTest is Deployers {
+    address internal rebasingAlice = makeAddr("rebasingRegressionAlice");
+    MockRebasingERC20 internal rebasingReserve;
+    HalalPSM internal rebasingPsm;
+
+    function setUp() public {
+        deployAll();
+        rebasingReserve = new MockRebasingERC20();
+        rebasingPsm = new HalalPSM(address(rebasingReserve), address(token), address(timelock), address(0xBEEF));
+
+        vm.startPrank(address(timelock));
+        token.grantRole(token.MINTER_ROLE(), address(rebasingPsm));
+        token.grantRole(token.BURNER_ROLE(), address(rebasingPsm));
+        vm.stopPrank();
+        vm.prank(address(0xBEEF));
+        rebasingPsm.updateCPI(1_000_000);
+    }
+
+    function test_RebasingLossBlocksWithdrawalThatWorsensDeficit() public {
+        rebasingReserve.mint(rebasingAlice, 1_000e18);
+        vm.startPrank(rebasingAlice);
+        rebasingReserve.approve(address(rebasingPsm), 1_000e18);
+        rebasingPsm.deposit(1_000e18);
+        vm.stopPrank();
+
+        rebasingReserve.rebase(address(rebasingPsm), -int256(100e18));
+        assertEq(rebasingReserve.balanceOf(address(rebasingPsm)), 900e18);
+        assertEq(rebasingPsm.reserveRequired(), 1_000e18);
+        assertEq(rebasingPsm.reserveSurplus(), -int256(100e18));
+
+        vm.startPrank(rebasingAlice);
+        token.approve(address(rebasingPsm), 1_000e18);
+        vm.expectRevert(HalalPSM.InsufficientReserve.selector);
+        rebasingPsm.withdraw(1_000e18);
+        rebasingPsm.withdraw(100e18);
+        vm.stopPrank();
+
+        assertEq(rebasingReserve.balanceOf(address(rebasingPsm)), 800e18);
+        assertEq(rebasingPsm.reserveRequired(), 900e18);
+        assertEq(rebasingPsm.reserveSurplus(), -int256(100e18));
+        assertEq(token.balanceOf(rebasingAlice), 900e18);
+        assertEq(rebasingPsm.redeemableBalance(rebasingAlice), 900e18);
+    }
+
+    function test_RebasingLossAllowsWithdrawalWithoutWorseningExistingDeficit() public {
+        rebasingReserve.mint(rebasingAlice, 1_000e18);
+        vm.startPrank(rebasingAlice);
+        rebasingReserve.approve(address(rebasingPsm), 1_000e18);
+        rebasingPsm.deposit(1_000e18);
+        vm.stopPrank();
+
+        vm.prank(address(timelock));
+        rebasingPsm.mockCPI(1_100_000);
+        rebasingReserve.rebase(address(rebasingPsm), -int256(50e18));
+        assertEq(rebasingPsm.reserveRequired(), 1_100e18);
+        assertEq(rebasingPsm.reserveSurplus(), -int256(150e18));
+
+        vm.startPrank(rebasingAlice);
+        token.approve(address(rebasingPsm), 100e18);
+        rebasingPsm.withdraw(100e18);
+        vm.stopPrank();
+
+        assertEq(rebasingReserve.balanceOf(address(rebasingPsm)), 840e18);
+        assertEq(rebasingPsm.reserveRequired(), 990e18);
+        assertEq(rebasingPsm.reserveSurplus(), -int256(150e18));
+        assertEq(rebasingPsm.totalHlcIssued(), 900e18);
+        assertEq(rebasingPsm.redeemableBalance(rebasingAlice), 900e18);
+        assertEq(token.balanceOf(rebasingAlice), 900e18);
     }
 }
