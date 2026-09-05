@@ -63,6 +63,6 @@ jobs:
 
       - name: Upload Slither results
         if: always() && hashFiles('slither-results.sarif') != ''
-        uses: github/codeql-action/upload-sarif@4c0873ef8656cb3c50b3f42fb63bc1ade0cfa827 # v4
+        uses: github/codeql-action/upload-sarif@313a0b99225f41fe3a5666e8fa7b2d8048c194ec # v4
         with:
           sarif_file: slither-results.sarif
