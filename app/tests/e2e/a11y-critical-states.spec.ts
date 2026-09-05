@@ -77,7 +77,97 @@ const PSM_ABI = [
     inputs: [{ name: "account", type: "address" }],
     outputs: [{ name: "", type: "uint256" }],
   },
+  {
+    type: "function",
+    name: "PARAM_ROLE",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "bytes32" }],
+  },
+  {
+    type: "function",
+    name: "hasRole",
+    stateMutability: "view",
+    inputs: [
+      { name: "role", type: "bytes32" },
+      { name: "account", type: "address" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  { type: "function", name: "cpiRate", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
+  { type: "function", name: "lastUpdated", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
+  {
+    type: "function",
+    name: "lastReportTimestamp",
+    stateMutability: "view",
+    inputs: [],
+    outputs: [{ name: "", type: "uint256" }],
+  },
+  { type: "error", name: "RateOutOfBounds", inputs: [] },
+  { type: "error", name: "UpdateTooSoon", inputs: [] },
+  { type: "error", name: "RateWouldUnderCollateralize", inputs: [] },
+  {
+    type: "error",
+    name: "AccessControlUnauthorizedAccount",
+    inputs: [
+      { name: "account", type: "address" },
+      { name: "neededRole", type: "bytes32" },
+    ],
+  },
 ] as const;
+
+// A reverted receipt reports no reason, which makes an intermittent governance failure
+// undiagnosable from CI logs alone (see issue #188). Replay the call at the parent block to
+// recover the decoded custom error, and report gas so an out-of-gas result is distinguishable
+// from a genuine revert.
+async function assertGovernanceCallSucceeded(
+  publicClient: ReturnType<typeof createPublicClient>,
+  hash: Hex,
+  context: { psm: `0x${string}`; timelock: `0x${string}`; label: string },
+) {
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (receipt.status === "success") return receipt;
+
+  const transaction = await publicClient.getTransaction({ hash });
+  const lines = [
+    `${context.label} reverted (tx ${hash})`,
+    `gasUsed=${receipt.gasUsed} gasLimit=${transaction.gas}` +
+      (receipt.gasUsed === transaction.gas ? " -- equal, so this is out of gas, not a revert" : ""),
+    `block=${receipt.blockNumber} from=${transaction.from}`,
+  ];
+
+  try {
+    await publicClient.call({
+      account: transaction.from,
+      to: transaction.to ?? undefined,
+      data: transaction.input,
+      blockNumber: receipt.blockNumber - 1n,
+    });
+    lines.push("replay at the parent block SUCCEEDED: failure is gas- or ordering-dependent");
+  } catch (error) {
+    lines.push(`replay at the parent block reverted with: ${(error as Error).message.split("\n")[0]}`);
+  }
+
+  try {
+    const paramRole = await publicClient.readContract({
+      address: context.psm, abi: PSM_ABI, functionName: "PARAM_ROLE",
+    });
+    const [hasRole, cpiRate, lastUpdated, lastReportTimestamp] = await Promise.all([
+      publicClient.readContract({ address: context.psm, abi: PSM_ABI, functionName: "hasRole", args: [paramRole, context.timelock] }),
+      publicClient.readContract({ address: context.psm, abi: PSM_ABI, functionName: "cpiRate" }),
+      publicClient.readContract({ address: context.psm, abi: PSM_ABI, functionName: "lastUpdated" }),
+      publicClient.readContract({ address: context.psm, abi: PSM_ABI, functionName: "lastReportTimestamp" }),
+    ]);
+    lines.push(
+      `psm=${context.psm} timelock=${context.timelock} hasRole(PARAM_ROLE)=${hasRole}`,
+      `cpiRate=${cpiRate} lastUpdated=${lastUpdated} lastReportTimestamp=${lastReportTimestamp}`,
+    );
+  } catch (error) {
+    lines.push(`could not read PSM diagnostics: ${(error as Error).message.split("\n")[0]}`);
+  }
+
+  throw new Error(lines.join("\n"));
+}
 
 const CPI_ADAPTER_ABI = [
   {
@@ -329,9 +419,19 @@ test.describe("a11y smoke: critical dApp states", () => {
       abi: PSM_ABI,
       functionName: "mockCPI",
       args: [1_500_000n],
+      // Automatic estimation is used as the gas limit with no headroom. mockCPI's cost depends on
+      // whether previousCPI and lastReportTimestamp move from zero (~20k per slot) or are merely
+      // updated (~5k), and the snapshot reverts these tests rely on flip those slots back to zero.
+      // An estimate taken in one state is then short for execution in another, and the transaction
+      // runs out of gas rather than reverting (issue #188). Local disposable chain: bound it
+      // generously instead of depending on estimation.
+      gas: 200_000n,
     });
-    const cpiReceipt = await publicClient.waitForTransactionReceipt({ hash: cpiHash });
-    expect(cpiReceipt.status).toBe("success");
+    await assertGovernanceCallSucceeded(publicClient, cpiHash, {
+      psm: env.NEXT_PUBLIC_HLC_PSM_31337 as `0x${string}`,
+      timelock,
+      label: "governance mockCPI",
+    });
     await testClient.stopImpersonatingAccount({ address: timelock });
 
     await page.goto("/health");
