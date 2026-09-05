@@ -293,7 +293,26 @@ jobs:
         run: node ../scripts/validate-deployment-registry.mjs
 
       - name: pnpm audit (production dependencies)
-        run: pnpm audit --prod --audit-level=high
+        # The advisories endpoint is a network dependency of a required check: when
+        # registry.npmjs.org is unreachable the audit fails with a TimeoutError that says nothing
+        # about this repository's dependencies. Retry transport failures, but still fail the job
+        # when the audit actually reports a high-severity advisory.
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3; do
+            output="$(pnpm audit --prod --audit-level=high 2>&1)" && exit 0
+            status=$?
+            printf '%s\n' "$output"
+            if printf '%s' "$output" | grep -qE 'TimeoutError|ERR_PNPM_AUDIT_ENDPOINT|operation was aborted|ECONNRESET|ENOTFOUND|EAI_AGAIN'; then
+              echo "::warning::pnpm audit could not reach the advisory endpoint (attempt ${attempt}/3); retrying"
+              sleep $((attempt * 30))
+              continue
+            fi
+            echo "::error::pnpm audit reported a high-severity advisory"
+            exit "$status"
+          done
+          echo "::error::pnpm audit could not reach the advisory endpoint after 3 attempts"
+          exit 1
 
       - name: Configured local dApp smoke test
         # Bound the disposable Anvil/Next harness separately so a child-process hang produces a
