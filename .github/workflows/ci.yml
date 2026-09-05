@@ -36,7 +36,12 @@ jobs:
               - 'Makefile'
             app:
               - 'app/**'
-              - 'scripts/**'
+              # Only these root-level paths are consumed by the dApp checks. Keep monitoring and
+              # report-preparation scripts out of the expensive browser job unless they are wired
+              # into the local app smoke fixture in the future.
+              - 'scripts/local-app-smoke.sh'
+              - 'scripts/validate-deployment-registry.mjs'
+              - 'scripts/preflight-deployment.mjs'
               - 'Makefile'
             docs:
               - '**/*.md'

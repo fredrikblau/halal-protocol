@@ -51,6 +51,7 @@ function runPsmHealthWithFakeCast(overrides = {}) {
     adapterLastSubmitted: "900",
     adapterLastSubmittedCpi: "1000000",
     adapterSigner: "0x0000000000000000000000000000000000000003",
+    adapterUpdaterRole: "true",
     code: "0x1234",
     ...overrides,
   };
@@ -67,6 +68,8 @@ case "$*" in
   *"MAX_REPORT_AGE"*) echo '${values.maxReportAge}' ;;
   *"lastUpdated"*) echo '${values.lastUpdated}' ;;
   *"minUpdateInterval"*) echo '${values.minUpdateInterval}' ;;
+  *"UPDATER_ROLE()(bytes32)"*) echo '0x${"b".repeat(64)}' ;;
+  *"hasRole(bytes32,address)(bool)"*) echo '${values.adapterUpdaterRole}' ;;
   *"source()(string)"*) echo '${values.source}' ;;
   *"psm()(address)"*) echo '${values.adapterPsm}' ;;
   *"owner()(address)"*) echo '${values.adapterOwner}' ;;
@@ -173,6 +176,19 @@ test("configured CPI adapter rejects a mismatched PSM address", () => {
   assert.match(result.output, /^reason=cpi_adapter_psm_mismatch$/m);
 });
 
+test("configured CPI adapter must hold the PSM updater role", () => {
+  const result = runPsmHealthWithFakeCast({
+    CPI_ADAPTER: "0x0000000000000000000000000000000000000004",
+    EXPECTED_CPI_ADAPTER_OWNER: "0x0000000000000000000000000000000000000002",
+    EXPECTED_CPI_SOURCE: "BLS-CPI",
+    EXPECTED_CPI_SOURCE_ID: `0x${"a".repeat(64)}`,
+    adapterUpdaterRole: "false",
+  });
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /^status=unhealthy$/m);
+  assert.match(result.output, /^reason=cpi_adapter_missing_updater_role$/m);
+});
+
 test("configured CPI adapter rejects an unexpected owner", () => {
   const result = runPsmHealthWithFakeCast({
     CPI_ADAPTER: "0x0000000000000000000000000000000000000004",
@@ -231,6 +247,7 @@ test("configured CPI adapter rejects a report watermark mismatch", () => {
   });
   assert.notEqual(result.status, 0, result.output);
   assert.match(result.output, /^reason=cpi_adapter_watermark_mismatch$/m);
+
 });
 
 test("standalone PSM health check reports stale CPI data", () => {
