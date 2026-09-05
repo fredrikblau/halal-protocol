@@ -23,8 +23,22 @@ contract CPIAdapterGovernanceHarness {
 contract MockNoOpCPIReportSink {
     function updateCPIWithTimestamp(uint256, uint256) external { }
 
+    function cpiRate() external pure returns (uint256) {
+        return 0;
+    }
+
     function lastReportTimestamp() external pure returns (uint256) {
         return 0;
+    }
+}
+
+contract MockMismatchedCPIReportSink {
+    uint256 public cpiRate;
+    uint256 public lastReportTimestamp;
+
+    function updateCPIWithTimestamp(uint256 reportedCPI, uint256 reportedAt) external {
+        cpiRate = reportedCPI + 1;
+        lastReportTimestamp = reportedAt;
     }
 }
 
@@ -51,6 +65,7 @@ contract CPIReportAdapterTest is Test {
         signers[2] = signerThree;
         sink = new MockCPIReportSink();
         adapter = new CPIReportAdapter(address(sink), address(this), signers, 2, SOURCE_ID);
+        assertEq(adapter.lastSubmittedCPI(), sink.cpiRate());
     }
 
     function test_SubmitsQuorumReportToSink() public {
@@ -63,6 +78,7 @@ contract CPIReportAdapterTest is Test {
         assertEq(sink.lastReportTimestamp(), reportedAt);
         assertEq(sink.lastCaller(), address(adapter));
         assertEq(adapter.lastSubmittedTimestamp(), reportedAt);
+        assertEq(adapter.lastSubmittedCPI(), 1_010_000);
     }
 
     function test_ForwardsReportToHalalPSM() public {
@@ -216,6 +232,25 @@ contract CPIReportAdapterTest is Test {
         noOpAdapter.submitReport(1_000_000, reportedAt, signatures);
 
         assertEq(noOpAdapter.lastSubmittedTimestamp(), 0);
+        assertEq(noOpAdapter.lastSubmittedCPI(), 0);
+    }
+
+    function test_RevertWhen_SinkStoresDifferentCpiThanSubmitted() public {
+        MockMismatchedCPIReportSink mismatchedSink = new MockMismatchedCPIReportSink();
+        address[] memory signers = new address[](2);
+        signers[0] = signerOne;
+        signers[1] = signerTwo;
+        CPIReportAdapter mismatchedAdapter =
+            new CPIReportAdapter(address(mismatchedSink), address(this), signers, 2, SOURCE_ID);
+        uint256 reportedAt = block.timestamp - 1;
+        bytes[] memory signatures =
+            _signReportFor(mismatchedAdapter, 1_000_000, reportedAt, SIGNER_ONE_KEY, SIGNER_TWO_KEY);
+
+        vm.expectRevert(CPIReportAdapter.ReportNotAccepted.selector);
+        mismatchedAdapter.submitReport(1_000_000, reportedAt, signatures);
+
+        assertEq(mismatchedAdapter.lastSubmittedTimestamp(), 0);
+        assertEq(mismatchedAdapter.lastSubmittedCPI(), 0);
     }
 
     function test_RevertWhen_OwnerIsAddedAsSigner() public {
@@ -223,9 +258,26 @@ contract CPIReportAdapterTest is Test {
         adapter.addSigner(address(this));
     }
 
+    function test_RevertWhen_ExistingSignerIsAddedAgain() public {
+        vm.expectRevert(CPIReportAdapter.SignerAlreadyConfigured.selector);
+        adapter.addSigner(signerOne);
+    }
+
     function test_RevertWhen_OwnershipTransferTargetsSigner() public {
         vm.expectRevert(CPIReportAdapter.SignerOwnerOverlap.selector);
         adapter.transferOwnership(signerOne);
+    }
+
+    function test_OwnerCanCompleteOwnershipTransferToNonSigner() public {
+        address newOwner = address(0xCAFE);
+        adapter.transferOwnership(newOwner);
+
+        assertEq(adapter.pendingOwner(), newOwner);
+        vm.prank(newOwner);
+        adapter.acceptOwnership();
+
+        assertEq(adapter.owner(), newOwner);
+        assertEq(adapter.pendingOwner(), address(0));
     }
 
     function test_RevertWhen_PendingOwnerIsAddedAsSigner() public {
@@ -259,11 +311,21 @@ contract CPIReportAdapterTest is Test {
         uint256 reportedAt = block.timestamp - psm.MAX_REPORT_AGE() - 1;
         bytes[] memory signatures = _signReportFor(psmAdapter, 1_000_000, reportedAt, SIGNER_ONE_KEY, SIGNER_TWO_KEY);
 
-        vm.expectRevert(HalalPSM.ReportTooOld.selector);
+        vm.expectRevert(CPIReportAdapter.ReportTooOld.selector);
         psmAdapter.submitReport(1_000_000, reportedAt, signatures);
 
         assertEq(psm.lastReportTimestamp(), 0);
         assertEq(psmAdapter.lastSubmittedTimestamp(), 0);
+    }
+
+    function test_AcceptsReportAtInclusiveFreshnessBoundary() public {
+        uint256 reportedAt = block.timestamp - adapter.MAX_REPORT_AGE();
+        bytes[] memory signatures = _signReport(1_000_000, reportedAt, SIGNER_ONE_KEY, SIGNER_TWO_KEY);
+
+        adapter.submitReport(1_000_000, reportedAt, signatures);
+
+        assertEq(sink.lastReportTimestamp(), reportedAt);
+        assertEq(adapter.lastSubmittedTimestamp(), reportedAt);
     }
 
     function test_RevertWhen_SinkRejectsOutOfRangeReport() public {
@@ -378,6 +440,15 @@ contract CPIReportAdapterTest is Test {
         CPIAdapterGovernanceHarness harness = new CPIAdapterGovernanceHarness();
         vm.expectRevert(CPIAdapterGovernance.EmptySource.selector);
         harness.buildHandoff(address(sink), address(adapter), " \t\n", address(0));
+    }
+
+    function test_RevertWhen_HandoffSourceIsFormFeedOrVerticalTabOnly() public {
+        CPIAdapterGovernanceHarness harness = new CPIAdapterGovernanceHarness();
+        vm.expectRevert(CPIAdapterGovernance.EmptySource.selector);
+        harness.buildHandoff(address(sink), address(adapter), string(abi.encodePacked(bytes1(0x0b))), address(0));
+
+        vm.expectRevert(CPIAdapterGovernance.EmptySource.selector);
+        harness.buildHandoff(address(sink), address(adapter), string(abi.encodePacked(bytes1(0x0c))), address(0));
     }
 
     function _signReport(uint256 reportedCPI, uint256 reportedAt, uint256 firstKey)

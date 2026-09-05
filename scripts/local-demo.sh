@@ -4,7 +4,9 @@ set -euo pipefail
 # This wrapper is intentionally local-only. The default mnemonic is a published Anvil demo
 # mnemonic and must never be used with a public RPC. Set ANVIL_MNEMONIC to use another local seed.
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
-LOCAL_RPC_URL="http://127.0.0.1:8545"
+ANVIL_PORT="${ANVIL_PORT:-8545}"
+APP_PORT="${APP_PORT:-3000}"
+LOCAL_RPC_URL="http://127.0.0.1:${ANVIL_PORT}"
 LOCAL_MNEMONIC="${ANVIL_MNEMONIC:-test test test test test test test test test test test junk}"
 DEPLOY_LOG="$(mktemp)"
 ANVIL_PID=""
@@ -13,8 +15,26 @@ APP_ENV_FILE="$ROOT_DIR/app/.env.local"
 APP_ENV_BACKUP=""
 APP_ENV_CREATED="false"
 
+require_port() {
+  local label="$1"
+  local value="$2"
+  if [[ ! "$value" =~ ^[0-9]{1,5}$ ]] || (( value < 1 || value > 65535 )); then
+    echo "$label must be an integer between 1 and 65535 (got $value)" >&2
+    exit 1
+  fi
+}
+
+require_port "ANVIL_PORT" "$ANVIL_PORT"
+require_port "APP_PORT" "$APP_PORT"
+if [[ "$ANVIL_PORT" == "$APP_PORT" ]]; then
+  echo "ANVIL_PORT and APP_PORT must be different (both are $ANVIL_PORT)" >&2
+  exit 1
+fi
+
 cleanup() {
-  if [[ -n "$APP_PID" ]]; then kill "$APP_PID" 2>/dev/null || true; fi
+  if [[ -n "$APP_PID" ]]; then
+    kill -- -"$APP_PID" 2>/dev/null || kill "$APP_PID" 2>/dev/null || true
+  fi
   if [[ -n "$ANVIL_PID" ]]; then kill "$ANVIL_PID" 2>/dev/null || true; fi
   if [[ -n "$APP_ENV_BACKUP" && -f "$APP_ENV_BACKUP" ]]; then
     mv -f "$APP_ENV_BACKUP" "$APP_ENV_FILE"
@@ -36,7 +56,7 @@ if cast chain-id --rpc-url "$LOCAL_RPC_URL" >/dev/null 2>&1; then
 fi
 
 echo "Starting disposable Anvil chain..."
-anvil --silent --mnemonic "$LOCAL_MNEMONIC" --port 8545 >/tmp/halal-anvil.log 2>&1 &
+anvil --silent --mnemonic "$LOCAL_MNEMONIC" --port "$ANVIL_PORT" >/tmp/halal-anvil.log 2>&1 &
 ANVIL_PID=$!
 until cast chain-id --rpc-url "$LOCAL_RPC_URL" >/dev/null 2>&1; do sleep 1; done
 LOCAL_PRIVATE_KEY="$(cast wallet derive --insecure "$LOCAL_MNEMONIC" | awk '/Private key:/ { print $3; exit }')"
@@ -109,10 +129,7 @@ LOCAL_DEPLOYMENT_BLOCK="$(cast block latest --field number --rpc-url "$LOCAL_RPC
 } > "$APP_ENV_FILE"
 
 echo "Temporary frontend configuration written to app/.env.local (restored on exit)"
-echo "Starting the dApp at http://localhost:3000 (Ctrl-C to stop both processes)..."
-(
-  cd "$ROOT_DIR/app"
-  pnpm dev
-) &
+echo "Starting the dApp at http://localhost:${APP_PORT} (Ctrl-C to stop both processes)..."
+setsid pnpm --dir "$ROOT_DIR/app" dev --hostname 127.0.0.1 --port "$APP_PORT" &
 APP_PID=$!
 wait "$APP_PID"

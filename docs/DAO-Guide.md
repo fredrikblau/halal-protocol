@@ -7,7 +7,7 @@ read [`SECURITY.md`](../SECURITY.md) before using real funds. It includes:
 
 - **HalalDAO.sol** - OpenZeppelin Governor with voting
 - **HalalTimelock.sol** - 2-day execution delay
-- **Full Test Suite** - 196 tests (183 unit/configuration tests plus 13 stateful PSM invariants) covering the core workflows
+- **Full Test Suite** - 214 tests (198 unit/configuration tests plus 16 stateful PSM invariants) covering the core workflows
 - **Deployment Script** - One-command setup
 - **Example Proposals** - Ready-to-use proposal templates
 
@@ -194,7 +194,7 @@ forge test -vvv
 # ✓ test_CastVote_For
 # ✓ test_FullProposalFlow
 # ✓ test_DAO_ControlsPSM_AfterTakeover
-# ... (196 tests: 183 unit/configuration + 13 invariants) ...
+# ... (214 tests: 198 unit/configuration + 16 invariants) ...
 ```
 
 ### Step 3: Verify on Arbiscan
@@ -447,7 +447,7 @@ timelocked migration of protocol roles.
 
 Before moving to Arbitrum mainnet:
 
-- [ ] All tests passing locally and on the target network (196/196 local suite)
+- [ ] All tests passing locally and on the target network (214/214 local suite)
 - [ ] Manual proposal cycle tested (create → vote → queue → execute)
 - [ ] Team vesting wallet is multisig (e.g., Gnosis Safe)
 - [ ] Treasury vesting wallet is multisig
@@ -462,7 +462,7 @@ Before moving to Arbitrum mainnet:
 ## Files Included
 
 - `contracts/src/` — five core contracts plus the optional CPI report adapter and handoff action builder
-- `contracts/test/` — 196 tests (183 unit/configuration tests plus 13 stateful PSM invariants) and fixtures
+- `contracts/test/` — 214 tests (198 unit/configuration tests plus 16 stateful PSM invariants) and fixtures
 - `contracts/script/Deploy.s.sol` — full-system deployment script
 - `contracts/script/Examples.s.sol` — governance proposal examples
 - `contracts/script/PrepareCPIAdapterHandoff.s.sol` — non-broadcasting adapter handoff calldata generator

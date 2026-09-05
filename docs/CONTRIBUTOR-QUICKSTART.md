@@ -23,6 +23,14 @@ The `--recurse-submodules` flag is required because the Foundry project pins Ope
 forge-std as Git submodules. If you already cloned without it, initialize the same dependencies
 with `git submodule update --init --recursive` before running any contract or local-demo command.
 
+If Docker is available, run the same pinned GitHub Actions workflow check used by CI:
+
+```shell
+make workflow-lint
+```
+
+This is an optional local check; the hosted workflow-lint job runs for every pull request.
+
 ## 2. See the complete protocol locally
 
 ```shell

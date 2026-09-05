@@ -10,6 +10,8 @@ import { HalalPSM } from "../src/HalalPSM.sol";
 import { HalalDAO } from "../src/HalalDAO.sol";
 import { HalalTimelock } from "../src/HalalTimelock.sol";
 
+contract MockGovernedModule { }
+
 contract HalalDAOTest is Deployers {
     address internal voter = makeAddr("voter");
     address internal smallHolder = makeAddr("smallHolder");
@@ -50,6 +52,7 @@ contract HalalDAOTest is Deployers {
     function test_Quorum() public view {
         assertEq(dao.quorumNumerator(), 4);
         assertEq(dao.quorumDenominator(), 100);
+        assertEq(dao.quorum(block.number - 1), (token.getPastTotalSupply(block.number - 1) * 4) / 100);
     }
 
     function test_VotingDelay() public view {
@@ -62,6 +65,10 @@ contract HalalDAOTest is Deployers {
 
     function test_TimelockDelay() public view {
         assertEq(timelock.getMinDelay(), TIMELOCK_DELAY);
+    }
+
+    function test_ProposalNeedsQueuingUsesTimelockPolicy() public view {
+        assertTrue(dao.proposalNeedsQueuing(0));
     }
 
     function test_RevertWhen_DAOHasZeroToken() public {
@@ -137,7 +144,7 @@ contract HalalDAOTest is Deployers {
     }
 
     function test_CreateProposal_GrantMinterRole() public {
-        address newModule = makeAddr("lendingModule");
+        address newModule = address(new MockGovernedModule());
         address[] memory targets = new address[](1);
         targets[0] = address(token);
         uint256[] memory values = new uint256[](1);
@@ -370,7 +377,7 @@ contract HalalDAOTest is Deployers {
     }
 
     function test_DAO_ControlsToken_CanGrantMinterRole() public {
-        address newModule = makeAddr("stakingModule");
+        address newModule = address(new MockGovernedModule());
         address[] memory targets = new address[](1);
         targets[0] = address(token);
         uint256[] memory values = new uint256[](1);

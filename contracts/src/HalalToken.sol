@@ -27,15 +27,17 @@ contract HalalToken is ERC20, ERC20Permit, ERC20Votes, AccessControl {
     bool public genesisMinted;
 
     error ZeroAddress();
+    error NotContract();
+    error RoleRecipientNotContract();
     error GenesisAlreadyMinted();
     error GenesisRecipientsNotDistinct();
 
     /// @param admin Temporary deployer-controlled admin; deploy script must transfer this to the DAO
-    /// timelock and revoke the deployer's own roles once the full system is wired up.
+    /// timelock and revoke the deployer's own admin role once the full system is wired up. The
+    /// deployer is deliberately not a minter; deployment grants MINTER_ROLE only to the PSM.
     constructor(address admin) ERC20("Halal", "HLC") ERC20Permit("Halal") {
         if (admin == address(0)) revert ZeroAddress();
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
-        _grantRole(MINTER_ROLE, admin);
     }
 
     /// @notice One-time genesis mint of the fixed 6M/4M team/treasury allocation. Callable once by
@@ -45,6 +47,10 @@ contract HalalToken is ERC20, ERC20Permit, ERC20Votes, AccessControl {
         if (genesisMinted) revert GenesisAlreadyMinted();
         if (teamVesting == address(0) || treasuryVesting == address(0)) revert ZeroAddress();
         if (teamVesting == treasuryVesting) revert GenesisRecipientsNotDistinct();
+        // Genesis balances are intentionally held by vesting contracts, not externally owned
+        // accounts. Since this one-time mint cannot be corrected after execution, reject a
+        // mistyped or undeployed recipient before any supply is created.
+        if (teamVesting.code.length == 0 || treasuryVesting.code.length == 0) revert NotContract();
         genesisMinted = true;
         _mint(teamVesting, TEAM_ALLOCATION);
         _mint(treasuryVesting, TREASURY_ALLOCATION);
@@ -54,6 +60,16 @@ contract HalalToken is ERC20, ERC20Permit, ERC20Votes, AccessControl {
     /// mint/burn against deposited reserves) and, on a case-by-case governance vote, to future modules.
     function mint(address to, uint256 amount) external onlyRole(MINTER_ROLE) {
         _mint(to, amount);
+    }
+
+    /// @notice Grants a minting or accounting-aware burning role only to deployed modules.
+    /// Governance may still grant other roles to addresses such as the temporary deployment
+    /// administrator, but an EOA must never become an independent token issuer or burner.
+    function grantRole(bytes32 role, address account) public override onlyRole(getRoleAdmin(role)) {
+        if ((role == MINTER_ROLE || role == BURNER_ROLE) && account.code.length == 0) {
+            revert RoleRecipientNotContract();
+        }
+        _grantRole(role, account);
     }
 
     /// @notice Burns HLC through an accounting-aware protocol module such as HalalPSM.

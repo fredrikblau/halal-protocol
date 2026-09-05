@@ -40,6 +40,10 @@ export function usePsmState() {
     query: { enabled: isDeployed, refetchInterval: 20_000 },
   });
   const readFailed = hasReadFailure(data);
+  // A fully failed optional batch can return no result array at all. Once loading has finished,
+  // that is just as unsafe as an individual failed result: report metadata must never silently
+  // look like a legacy deployment or a healthy read.
+  const reportReadFailed = isDeployed && !reportLoading && (reportData === undefined || hasReadFailure(reportData));
 
   const get = <T>(i: number): T | undefined => (data?.[i]?.status === "success" ? (data[i].result as T) : undefined);
   const getReport = <T>(i: number): T | undefined =>
@@ -60,8 +64,8 @@ export function usePsmState() {
     lastReportTimestamp: getReport<bigint>(0),
     maxReportAge: getReport<bigint>(1),
     isLoading: isLoading || reportLoading,
-    isError: isError || readFailed,
-    error: error ?? (readFailed ? partialReadError() : undefined),
+    isError: isError || readFailed || reportReadFailed,
+    error: error ?? (readFailed || reportReadFailed ? partialReadError() : undefined),
     refetch,
   };
 }

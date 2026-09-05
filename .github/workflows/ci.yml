@@ -128,6 +128,10 @@ jobs:
       - name: forge test
         run: forge test --force -vvv
 
+      - name: Verify current documentation test counts
+        working-directory: .
+        run: make test-counts
+
       - name: forge lint (first-party code)
         run: forge lint src test script --severity high --severity med --severity low --severity gas
 
@@ -205,6 +209,15 @@ jobs:
       - name: Shell syntax
         run: bash -n scripts/*.sh
 
+      - name: ShellCheck (pinned)
+        # Keep this toolchain pinned and scan only first-party shell entrypoints. The image digest
+        # makes the operational-script gate reproducible across hosted runners.
+        run: >-
+          docker run --rm -v "$GITHUB_WORKSPACE/scripts:/mnt:ro"
+          koalaman/shellcheck:v0.10.0@sha256:2097951f02e735b613f4a34de20c40f937a6c8f18ecb170612c88c34517221fb
+          /mnt/check-deployment-health.sh /mnt/check-psm-health.sh /mnt/local-adapter-demo.sh
+          /mnt/local-app-smoke.sh /mnt/local-demo.sh /mnt/verify-deployment.sh
+
       - name: Validate deployment registry
         run: node scripts/validate-deployment-registry.mjs
 
@@ -217,8 +230,13 @@ jobs:
     if: needs.changes.outputs.docs == 'true'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout (with submodules)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@908c540300062bd5a7e473851cdb4282204cee09 # v1
 
       - name: Install Node
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
@@ -227,6 +245,9 @@ jobs:
 
       - name: Validate Markdown links and anchors
         run: make markdown-links
+
+      - name: Verify current documentation test counts
+        run: make test-counts
 
   app:
     name: Frontend (Next.js)
@@ -272,13 +293,36 @@ jobs:
         run: node ../scripts/validate-deployment-registry.mjs
 
       - name: pnpm audit (production dependencies)
-        run: pnpm audit --prod --audit-level=high
+        # The advisories endpoint is a network dependency of a required check: when
+        # registry.npmjs.org is unreachable the audit fails with a TimeoutError that says nothing
+        # about this repository's dependencies. Retry transport failures, but still fail the job
+        # when the audit actually reports a high-severity advisory.
+        run: |
+          set -uo pipefail
+          for attempt in 1 2 3; do
+            output="$(pnpm audit --prod --audit-level=high 2>&1)" && exit 0
+            status=$?
+            printf '%s\n' "$output"
+            if printf '%s' "$output" | grep -qE 'TimeoutError|ERR_PNPM_AUDIT_ENDPOINT|operation was aborted|ECONNRESET|ENOTFOUND|EAI_AGAIN'; then
+              echo "::warning::pnpm audit could not reach the advisory endpoint (attempt ${attempt}/3); retrying"
+              sleep $((attempt * 30))
+              continue
+            fi
+            echo "::error::pnpm audit reported a high-severity advisory"
+            exit "$status"
+          done
+          echo "::error::pnpm audit could not reach the advisory endpoint after 3 attempts"
+          exit 1
 
       - name: Configured local dApp smoke test
-        run: cd .. && ./scripts/local-app-smoke.sh
+        # Bound the disposable Anvil/Next harness separately so a child-process hang produces a
+        # useful failure before the 30-minute job timeout.
+        run: timeout --signal=TERM --kill-after=30s 10m ../scripts/local-app-smoke.sh
 
       - name: Install Playwright Chromium
-        run: pnpm exec playwright install --with-deps chromium
+        # Browser downloads can stall independently of the test process on a hosted runner.
+        run: timeout --signal=TERM --kill-after=30s 10m pnpm exec playwright install --with-deps chromium
 
       - name: Browser permit-flow test
-        run: pnpm test:e2e
+        # Keep a hung browser or child server from leaving a required check pending indefinitely.
+        run: timeout --signal=TERM --kill-after=30s 15m pnpm test:e2e

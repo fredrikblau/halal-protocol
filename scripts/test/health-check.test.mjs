@@ -38,6 +38,7 @@ function runPsmHealthWithFakeCast(overrides = {}) {
     timestamp: "1000",
     reserveSurplus: "0",
     lastReportTimestamp: "900",
+    cpiRate: "1000000",
     maxReportAge: "200",
     lastUpdated: "1000",
     minUpdateInterval: "200",
@@ -48,6 +49,7 @@ function runPsmHealthWithFakeCast(overrides = {}) {
     adapterThreshold: "1",
     adapterSignerCount: "1",
     adapterLastSubmitted: "900",
+    adapterLastSubmittedCpi: "1000000",
     adapterSigner: "0x0000000000000000000000000000000000000003",
     code: "0x1234",
     ...overrides,
@@ -61,6 +63,7 @@ case "$*" in
   *"block latest"*) echo '${values.timestamp}' ;;
   *"reserveSurplus"*) echo '${values.reserveSurplus}' ;;
   *"lastReportTimestamp"*) echo '${values.lastReportTimestamp}' ;;
+  *"cpiRate"*) echo '${values.cpiRate}' ;;
   *"MAX_REPORT_AGE"*) echo '${values.maxReportAge}' ;;
   *"lastUpdated"*) echo '${values.lastUpdated}' ;;
   *"minUpdateInterval"*) echo '${values.minUpdateInterval}' ;;
@@ -71,6 +74,7 @@ case "$*" in
   *"threshold()(uint256)"*) echo '${values.adapterThreshold}' ;;
   *"signerCount()(uint256)"*) echo '${values.adapterSignerCount}' ;;
   *"lastSubmittedTimestamp()(uint256)"*) echo '${values.adapterLastSubmitted}' ;;
+  *"lastSubmittedCPI()(uint256)"*) echo '${values.adapterLastSubmittedCpi}' ;;
   *"signerAt(uint256)(address)"*) echo '${values.adapterSigner}' ;;
   *) echo "unexpected fake cast call: $*" >&2; exit 1 ;;
 esac
@@ -234,6 +238,18 @@ test("standalone PSM health check reports stale CPI data", () => {
   assert.notEqual(result.status, 0, result.output);
   assert.match(result.output, /^status=unhealthy$/m);
   assert.match(result.output, /^reason=timestamped_cpi_report_stale$/m);
+});
+
+test("standalone PSM health check reports adapter rate mismatch", () => {
+  const result = runPsmHealthWithFakeCast({
+    adapterLastSubmittedCpi: "1000001",
+    CPI_ADAPTER: "0x0000000000000000000000000000000000000004",
+    EXPECTED_CPI_ADAPTER_OWNER: "0x0000000000000000000000000000000000000002",
+    EXPECTED_CPI_SOURCE: "BLS-CPI",
+    EXPECTED_CPI_SOURCE_ID: `0x${"a".repeat(64)}`,
+  });
+  assert.notEqual(result.status, 0, result.output);
+  assert.match(result.output, /^reason=cpi_adapter_rate_mismatch$/m);
 });
 
 test("standalone PSM health check reports a reserve deficit", () => {

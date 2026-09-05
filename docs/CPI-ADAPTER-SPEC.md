@@ -54,8 +54,8 @@ sequenceDiagram
     Adapter->>PSM: updateCPIWithTimestamp(value, release time)
     PSM->>PSM: Check bounds, step, cadence, reserve, freshness, and watermark
     PSM-->>Adapter: Accept or revert
-    Adapter->>PSM: Read lastReportTimestamp()
-    Adapter->>Adapter: Require the sink watermark equals the report timestamp
+    Adapter->>PSM: Read lastReportTimestamp() and cpiRate()
+    Adapter->>Adapter: Require the sink timestamp and CPI rate equal the signed report
     Adapter-->>Relayer: Emit report acceptance or revert
 ```
 
@@ -123,7 +123,7 @@ parser, or custody review.
       reviewed, and no signer overlaps the owner or relies on undocumented custody.
 - [ ] The zero-value handoff calldata grants the adapter before revoking the old updater, changes
       the source label, and contains no unrelated action; offline preflight passes.
-- [ ] Before and after the first report, the operator records role events, adapter/PSM watermarks,
+- [ ] Before and after the first report, the operator records role events, adapter/PSM CPI values and watermarks,
       health output, report transaction, and the deployment journal entry.
 - [ ] A source or parser change is treated as a new review: prepare the replacement, verify its
       first report, then revoke the old updater; do not use `mockCPI` as an unreviewed fallback.
@@ -133,17 +133,19 @@ parser, or custody review.
 The adapter and operator must apply these rules:
 
 1. A missing, malformed, delayed, or disputed source report produces no PSM update.
-2. A stale watermark causes the PSM to reject new deposits. Existing valid redemption credits
-   remain subject to reserve and accounting checks.
+2. The adapter rejects reports older than 90 days, and the PSM independently rejects a stale
+   accepted-report watermark, so stale signed data cannot bootstrap or resume normal deposits.
+   Existing valid redemption credits remain subject to reserve and accounting checks.
 3. An adapter outage does not trigger an automatic fallback to an unreviewed source.
 4. Governance may use `mockCPI` for an explicit emergency correction. The proposal must record the
    reason, value, reserve impact, source evidence, and follow-up action.
 5. A compromised updater must be revoked through the timelock. Operators must preserve report and
    custody evidence for incident review.
 
-6. A sink call that returns successfully but does not advance `lastReportTimestamp` is rejected by
-   the adapter. This keeps `lastSubmittedTimestamp` from claiming acceptance when the configured
-   sink is a no-op or incompatible contract.
+6. A sink call that returns successfully but does not set both `lastReportTimestamp` and `cpiRate`
+   to the submitted report is rejected by the adapter. This keeps `lastSubmittedTimestamp` from
+   claiming acceptance when the configured sink is a no-op, incompatible, or rate-mismatching
+   contract.
 
 The adapter must not treat a successful transaction as proof that the source was correct. The PSM
 only proves that the report satisfied its on-chain constraints.
@@ -159,9 +161,9 @@ CPIReport(uint256 reportedCPI,uint256 reportedAt,bytes32 sourceId)
 ```
 
 The submitter must provide exactly `threshold` signatures, ordered by recovered signer address in
-strictly ascending order. The adapter rejects future or non-increasing publication timestamps,
-tracks the last forwarded timestamp, binds each signature to the adapter's immutable `sourceId`,
-and protects its PSM call with a reentrancy guard. `Ownable2Step` controls signer rotation and
+strictly ascending order. The adapter rejects future, older-than-90-day, or non-increasing
+publication timestamps, tracks the last forwarded timestamp, binds each signature to the adapter's
+immutable `sourceId`, and protects its PSM call with a reentrancy guard. `Ownable2Step` controls signer rotation and
 threshold changes. The signer set is capped at `MAX_SIGNERS = 64` so governance cannot expand
 signature verification until reports exceed practical block-gas limits; production deployments
 should use the smallest independently governed quorum that meets their custody policy. The owner
@@ -240,8 +242,8 @@ node scripts/verify-cpi-report.mjs \
 ```
 
 Read the signer addresses from the deployment health output or `CPIReportAdapter.getSigners()`.
-The verifier reads the live adapter's chain ID, PSM binding, source ID, threshold, signer set, and
-report watermark through the RPC. It also reads the PSM's report watermark, freshness window, and
+The verifier reads the live adapter's chain ID, PSM binding, source ID, threshold, signer set, submitted CPI,
+and report watermark through the RPC. It also reads the PSM's CPI rate, report watermark, freshness window, and
 current block time. It rejects stale, replayed, future, or already-consumed reports before it
 recovers signatures. The tool keeps private keys out of the process, requires one 65-byte signature
 per configured signer in strict address order, and delegates EIP-712 recovery to Foundry's
@@ -297,10 +299,10 @@ The operator must retain the source response, parser version, report timestamp, 
 transaction hash, and the health-check output for each accepted report. The BLS parser includes
 `source.responseSha256`, the SHA-256 of the exact input response bytes, so the normalized report can
 be paired with the archived source artifact without relying on JSON reserialization.
-The adapter reads the sink's public `lastReportTimestamp()` after every forwarded report and only
-updates `lastSubmittedTimestamp` when it equals the submitted timestamp. The two values must remain
-equal; a mismatch indicates a different updater, an incomplete handoff, or an unexpected state
-transition that requires investigation.
+The adapter reads the sink's public `lastReportTimestamp()` and `cpiRate()` after every forwarded
+report and only updates `lastSubmittedTimestamp` and `lastSubmittedCPI` when both equal the submitted report. The adapter
+and sink values must remain aligned; a mismatch indicates a different updater, an incomplete
+handoff, or an unexpected state transition that requires investigation.
 
 ## Acceptance tests
 
