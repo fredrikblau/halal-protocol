@@ -34,6 +34,9 @@ rehearsal, contract build/tests/lint, frontend lint/build/smoke, and browser E2E
 demo uses disposable Anvil state and a faucet-only mock reserve; never treat it as a public or
 funded deployment.
 
+Before picking up work, read `docs/NEXT-STEPS.md`. It records what is currently blocked, what is
+worth doing next, and which CI failures are known not to be caused by the change under test.
+
 ## Safety boundaries
 
 - The protocol is unaudited and not production-ready. Do not imply otherwise in code, docs, issues,
@@ -73,10 +76,43 @@ Use `apply_patch` for edits, preserve unrelated user changes, and verify the fin
 committing. Do not modify vendored dependencies under `contracts/lib/` unless the task explicitly
 requires it.
 
+## Landing changes
+
+- **The merge queue is serial.** `main` requires strict status checks, so every branch must be
+  current with `main` to merge, and each merge puts every other branch behind again. Throughput is
+  roughly one pull request per CI cycle no matter how many are ready. Finish and land a change
+  before starting the next one; a large open queue produces conflicts rather than progress.
+- **Documented test counts are enforced.** `make test-counts` compares the live Foundry suite
+  against `README.md`, `CONTRIBUTING.md`, `contracts/README.md`, `docs/Architecture.md`,
+  `docs/DAO-Guide.md`, and `docs/TECHNICAL-DOCS.md`. Update all six when the suite changes, and
+  never hard-code a count inside a test to make the check pass.
+- **Regenerate ABIs rather than hand-merging them.** After a Solidity interface change, run
+  `cd app && pnpm gen:abis`. A conflicted `app/src/abis/*.ts` should be resolved by regeneration.
+- **Verify a conflict before rewriting code.** `gh pr update-branch` reports a conflict for fork
+  branches it simply cannot update; a local `git merge origin/main` is the reliable signal.
+- **Pushing a branch that merged `main` may need SSH,** because the merge touches
+  `.github/workflows/` and an HTTPS OAuth token without `workflow` scope is rejected.
+
+## Diagnosing a red check
+
+A failing required check is frequently not the change under test. Confirm the cause before editing:
+
+- `pnpm audit` failing with `TimeoutError` is an npm advisory-endpoint outage. The step retries
+  transport failures on its own and still fails on a genuine advisory.
+- A reverted `mockCPI` in `a11y-critical-states.spec.ts` is a known intermittent failure that
+  reproduces on `main`; rerun the job rather than attributing it to the branch.
+- A fork pull request reporting no checks at all is waiting on maintainer approval of its workflow
+  runs, not failing.
+
+When two changes are individually correct but interact, fix the stale expectation and record why at
+the assertion. Conflicts between test files are usually additive on both sides: keep both, then run
+the suite to prove it.
+
 ## Canonical references
 
 - `README.md` — public overview, evidence table, local demo, and contributor funnel.
 - `docs/TECHNICAL-DOCS.md` — detailed API/deployment reference.
+- `docs/NEXT-STEPS.md` — current blockers, priority-ordered work, and known CI failure modes.
 - `docs/ROADMAP.md` — risk-ordered path to testnet and production readiness.
 - `docs/CPI-ADAPTER-SPEC.md` — source provenance, signer custody, and adapter handoff requirements.
 - `docs/OPERATOR-RUNBOOK.md` — recurring health checks and incident response.
