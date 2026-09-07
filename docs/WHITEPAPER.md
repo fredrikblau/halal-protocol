@@ -52,7 +52,7 @@ No contract is upgradeable, and no contract has an owner key that bypasses the D
 privileged action — minting, PSM parameter changes, treasury spending, granting roles to future
 modules — happens through a proposal, a vote, and a timelock delay. This is a deliberate
 trade-off: it means there is no emergency admin override if something goes wrong (see
-[§7, Risks](#7-risks-and-honest-limitations)), in exchange for the token actually being
+[§8, Risks](#8-risks-and-honest-limitations)), in exchange for the token actually being
 credibly neutral rather than "decentralized" in name with a backdoor in practice.
 
 For the full technical specification — function signatures, access-control matrix, gas
@@ -64,17 +64,32 @@ is, not *how* to call its functions.
 ## 3. The Peg Stability Module and CPI mechanism
 
 The PSM is where HLC enters and leaves circulation in response to user action (as opposed to
-genesis/vesting supply, which is fixed at deployment). A user deposits a reserve asset — DAI or
-USDC in the reference deployment — and receives HLC at the current rate; redeeming works in
-reverse.
+genesis/vesting supply, which is fixed at deployment). A user deposits a reserve asset — any
+ERC-20 whose decimals the PSM supports, chosen per deployment — and receives HLC at the current
+rate; redeeming works in reverse. There is no public deployment yet, so no reserve asset has been
+selected in production; the disposable local demo uses a faucet-only mock token, and the criteria
+a real candidate must satisfy are set out in
+[`RESERVE-ASSET-DUE-DILIGENCE.md`](RESERVE-ASSET-DUE-DILIGENCE.md).
 
-The rate is not fixed at 1:1 indefinitely. It moves according to a CPI figure that is submitted
-on-chain by a rate-limited updater role (intended in production to be a Chainlink Functions
-consumer pulling from an official CPI data source), bounded to a 0.1–2.0 range so that a bad or
-malicious data point can't move the rate to an absurd extreme in one step. A separate,
-DAO-gated manual override exists purely as an emergency mechanism if the automated feed breaks —
-it is deliberately harder to invoke than the routine update path, and any use of it is a matter
-of public record via governance.
+The rate is not fixed at 1:1 indefinitely. It moves according to a CPI figure submitted on-chain
+by a rate-limited `UPDATER_ROLE`, bounded to a 0.1–2.0 range so that a bad or malicious data point
+cannot move the rate to an absurd extreme.
+
+The PSM deliberately does not fetch CPI data itself. It accepts a bounded, timestamped report from
+whatever holds `UPDATER_ROLE`, which keeps the settlement contract independent of any single
+oracle vendor. The reference implementation of that role is
+[`CPIReportAdapter`](../contracts/src/CPIReportAdapter.sol): an optional contract that verifies a
+quorum of EIP-712 signatures over `(reportedCPI, reportedAt, sourceId)` before forwarding a report,
+so no individual signer can move the rate alone. A Chainlink Functions consumer, a Chainlink
+Automation relayer, or a differently-governed multi-signer scheme are all equally valid holders of
+that role; the choice is a deployment decision, not a protocol dependency. Source provenance,
+signer custody, and rotation requirements are specified in
+[`CPI-ADAPTER-SPEC.md`](CPI-ADAPTER-SPEC.md).
+
+A separate, DAO-gated manual override exists purely as an emergency mechanism if the feed breaks.
+It bypasses the cadence and per-step limits but remains bounded to the same 0.1–2.0 range, is
+deliberately harder to invoke than the routine update path, and any use of it is a matter of
+public record via governance.
 
 **Per-depositor redemption accounting.** Because HLC is one fungible token shared between
 PSM-issued (reserve-backed) supply and the fixed genesis/vesting allocation (which was never
@@ -86,7 +101,85 @@ losing its redemption right if transferred through a plain ERC20 transfer; users
 the PSM's atomic `transferRedeemable` path after approving it. That trade-off is documented in
 detail, with the reasoning behind it, in [`DESIGN-DECISIONS.md`](DESIGN-DECISIONS.md).
 
-## 4. Token and allocation
+## 4. Mechanism specification
+
+This section states the settlement arithmetic and the parameters that bound it. Values are taken
+from [`HalalPSM`](../contracts/src/HalalPSM.sol); the invariants they are meant to preserve are
+enumerated in [`INVARIANTS.md`](INVARIANTS.md).
+
+### 4.1 Notation and conversion
+
+Let `r` be the current CPI rate scaled by `CPI_PRECISION = 1e6`, so `r = 1_000_000` means 1.0.
+Let `d` be the reserve token's decimals and HLC's decimals be 18. Define the scale factor
+`s = 10^(18 - d)`, which normalises a reserve amount into 18-decimal units.
+
+For a reserve token with `d <= 18`:
+
+```
+hlcOut     = reserveIn · s · CPI_PRECISION / r
+reserveOut = hlcIn · r / (CPI_PRECISION · s)
+```
+
+Equivalently: one HLC settles against `r / CPI_PRECISION` normalised reserve units. A rise in `r`
+means each HLC redeems for *more* reserve — that is the entire point of the index. A reserve token
+with more than 18 decimals is handled by a separate branch that carries the extra precision
+through the multiplication rather than truncating in two stages, so small withdrawals are not
+systematically underpaid when `r` is not exactly 1.0.
+
+All conversions use `Math.mulDiv`, so the intermediate product does not overflow when the result
+itself is representable. Rounding is toward zero throughout, which favours the reserve rather than
+the redeemer — a deliberate direction, since the alternative lets rounding drain collateral.
+
+The PSM's outstanding obligation is `reserveRequired() = hlcToReserve(totalHlcIssued)`, computed
+at the current rate. Comparing that against the reserve balance defines whether the system is
+fully collateralised at this instant.
+
+### 4.2 Bounds and guards
+
+| Parameter | Value | Purpose |
+|---|---|---|
+| `CPI_PRECISION` | `1e6` | Fixed-point scale for the rate |
+| `MIN_CPI` / `MAX_CPI` | `100_000` / `2_000_000` (0.1–2.0) | Absolute rate bounds; enforced on every path including the DAO override |
+| `MAX_CPI_STEP_BPS` | `2_000` (20%) | Largest single move on the report path |
+| `minUpdateInterval` | 25 days (DAO-settable) | Minimum spacing between accepted reports, once a watermark exists |
+| `MAX_REPORT_AGE` | 90 days | Rejects stale reports, and marks the accepted watermark stale for deposits |
+| `MAX_RESERVE_DECIMALS` | 77 | Upper bound on supported reserve tokens |
+| `MAX_SIGNERS` (adapter) | 64 | Caps signature verification cost below practical block-gas limits |
+
+One bootstrap rule applies before any of this takes effect: while no report has ever been
+accepted, the cadence guard is skipped, because otherwise a fresh deployment could never take its
+first report. Once a watermark exists, every subsequent report is subject to it.
+
+Beyond that, two asymmetries are deliberate and worth stating plainly, because they are easy to
+misread:
+
+1. **The routine report path is strictly more constrained than the emergency override.**
+   A report submitted through `UPDATER_ROLE` must satisfy the freshness bound, the cadence
+   interval, the per-step limit, a strictly increasing timestamp, *and* leave the PSM able to
+   cover `reserveRequired()` — it reverts otherwise. The DAO's `mockCPI` override bypasses the
+   cadence and step limits by design, since its purpose is to correct a feed that has already
+   failed, but it remains bounded by `MIN_CPI`/`MAX_CPI`.
+2. **A stale feed halts new deposits rather than freezing redemption.** If no fresh report has
+   been accepted within `MAX_REPORT_AGE`, the system stops issuing new HLC against reserves while
+   existing redemption claims remain subject to the ordinary accounting and reserve checks. The
+   failure mode is chosen to stop the protocol taking on new obligations it cannot price, not to
+   trap existing holders.
+
+### 4.3 The signed report adapter
+
+`CPIReportAdapter` is optional and sits in front of the PSM. It verifies `threshold` EIP-712
+signatures over the typed struct `CPIReport(uint256 reportedCPI, uint256 reportedAt, bytes32
+sourceId)`, requires them in strictly ascending signer order (which rejects duplicates), binds
+every signature to an immutable `sourceId` so a report for one series cannot be replayed against
+another, and tracks the last forwarded timestamp so reports cannot be replayed or reordered.
+
+After forwarding, it re-reads the PSM and requires that both the accepted-report watermark and the
+stored rate actually moved to the submitted values before recording its own state. A sink that
+silently ignored the call, or accepted a different value, therefore cannot leave the adapter
+looking healthy. Signer-set changes and threshold changes are `Ownable2Step`-gated, intended to be
+held by the timelock.
+
+## 5. Token and allocation
 
 HLC has a fixed genesis supply of 10,000,000 tokens, split:
 
@@ -103,7 +196,7 @@ deposited reserve assets at the applicable CPI-adjusted redemption rate, or (b) 
 contract that the DAO has explicitly voted to grant `MINTER_ROLE`. There is no discretionary
 inflation.
 
-## 5. Governance
+## 6. Governance
 
 HLC holders govern the protocol directly; voting power comes from `ERC20Votes` checkpoints (an
 address's balance, delegated), so voting weight is auditable and snapshot-based rather than
@@ -113,7 +206,7 @@ signature-of-the-day.
   meaningful stakeholders, not just whales, can propose.
 - **Quorum:** 4% of total supply must vote for a proposal to be actionable — intentionally low,
   to avoid governance paralysis from low turnout, at the cost of concentrated holders having
-  outsized influence on any given vote (see [§7](#7-risks-and-honest-limitations)).
+  outsized influence on any given vote (see [§8](#8-risks-and-honest-limitations)).
 - **Voting period:** targets roughly one week of real time, converted into a block count from
   the actual target chain's block time rather than a number copied from an Ethereum L1 reference
   (a ~12s/block chain and a sub-second-block L2 need very different block counts for the same
@@ -136,12 +229,12 @@ upgrading an existing contract. This is not a hypothetical pattern; it is the in
 the near-term roadmap below, and it is documented in full (with a worked example) in
 [`AddingFeature.md`](AddingFeature.md).
 
-## 6. Roadmap
+## 7. Roadmap
 
 The core system — token, vesting, PSM, DAO, timelock — is deliberately minimal: it's the smallest
 set of contracts that makes a CPI-indexed, DAO-governed stablecoin work end to end. Everything
 below is future work, to be built as standalone contracts and connected to the existing system
-purely through DAO-granted roles, per the extension pattern in §5.
+purely through DAO-granted roles, per the extension pattern in [§6](#extending-the-protocol-without-touching-existing-contracts).
 
 - **Lending module.** The first planned extension. A money-market contract (Aave/Compound-style
   pool or an isolated-pair design — to be decided via governance discussion, not pre-committed
@@ -156,7 +249,8 @@ purely through DAO-granted roles, per the extension pattern in §5.
   is ever introduced by governance). Intended to align long-term holders more closely with
   governance outcomes than a simple balance-weighted vote does, and to give quorum a more stable
   base than freely-liquid balances provide.
-- **Cross-chain expansion.** The reference deployment targets Arbitrum; a canonical-vs-bridged
+- **Cross-chain expansion.** The first reference deployment targets Arbitrum Sepolia and has not
+  happened yet; a canonical-vs-bridged
   supply model (e.g. a canonical mint on one chain with a burn-and-mint or lock-and-mint bridge
   contract elsewhere) is the leading candidate for expanding HLC to additional chains without
   fragmenting DAO authority — governance would remain on a single home chain, with bridge
@@ -170,7 +264,7 @@ None of the above exists in the contracts today, and nothing here is a commitmen
 implementation, timeline, or parameter set — those are exactly the kind of decisions this
 protocol's own governance process exists to make. This section describes direction, not a spec.
 
-## 7. Risks and honest limitations
+## 8. Risks and honest limitations
 
 This project does not benefit from overselling itself, so this section is written as plainly as
 the rest of the technical documentation:
@@ -201,7 +295,76 @@ the rest of the technical documentation:
   the peg's meaning even though the on-chain mechanics enforcing the *reported* rate remain
   sound.
 
-## 8. Summary
+## 9. Security model
+
+The protocol's security rests on four claims, each of which is stated so that a reviewer can try
+to break it rather than take it on trust. The full analysis lives in
+[`THREAT-MODEL.md`](THREAT-MODEL.md) and [`INVARIANTS.md`](INVARIANTS.md); this is the summary.
+
+1. **No privileged actor outside governance.** After deployment the deployer holds no roles. Every
+   privileged action routes through a proposal, a vote, and the timelock. The deployment script
+   asserts this and refuses to finish otherwise, and `scripts/verify-deployment.sh` re-checks it
+   against a live chain without needing a key.
+2. **Issuance is collateralised or it does not happen.** HLC issued through the PSM is matched by
+   deposited reserves at the rate in force, and a report that would leave the PSM unable to cover
+   its outstanding obligation is rejected rather than accepted-and-flagged.
+3. **Redemption rights are per-address and cannot be laundered through transfers.** Redemption
+   credit tracks the address that deposited, so genesis and vesting supply — which never had
+   reserves behind it — cannot be redeemed against the reserve, and PSM-issued HLC that changes
+   hands via a plain ERC-20 transfer does not carry its claim with it.
+4. **Minting and burning authority is reachable only by deployed modules.** `MINTER_ROLE` and
+   `BURNER_ROLE` are rejected for externally owned accounts, so governance cannot — accidentally
+   or otherwise — turn a private key into an unbounded issuer.
+
+**What this model does not cover.** The reserve asset's own solvency and censorship behaviour, the
+integrity of the CPI series and the parties signing it, the security of whatever key material
+operates the updater role, the correctness of the compiler and vendored libraries, and the
+possibility that a majority of voting power is simply hostile. Several of those are addressed by
+process rather than by code, and process is weaker than code.
+
+Assurance evidence to date is a Foundry suite covering unit, configuration, differential
+arithmetic, adversarial reserve-token, and stateful invariant properties; static analysis; and an
+internal adversarial review. **None of that is an independent audit, and no independent audit has
+been performed.** Recruiting one is tracked in
+[issue #126](https://github.com/fredrikblau/halal-protocol/issues/126).
+
+## 10. Prior art and what is different here
+
+Indexing a claim to a price index is old and well understood outside crypto: inflation-linked
+government bonds such as US TIPS pay a principal that tracks CPI, and wage and rent escalation
+clauses do the same thing contractually. Halal applies that established idea to a reserve-backed
+on-chain token; the novelty is not the indexation itself.
+
+Within crypto, three neighbouring designs are worth distinguishing:
+
+- **Fiat-pegged stablecoins** hold a reserve and target a constant *nominal* price. They solve
+  volatility against the dollar and, by construction, inherit the dollar's loss of purchasing
+  power. That is the gap this protocol targets.
+- **Rebasing tokens** adjust every holder's balance to move a price toward a target. Halal
+  deliberately does not rebase: balances are stable and the *redemption rate* moves instead, which
+  keeps ERC-20 accounting, integrations, and vote weights intact.
+- **Moving-target designs** (a redemption price that drifts under controller logic) share the idea
+  of a peg that is not a constant, but derive the target from market feedback rather than from a
+  published external index. Halal's target is an external, attestable series, which trades
+  autonomy for auditability: anyone can check the reported figure against the published source.
+
+The PSM pattern itself — a contract that mints and burns against deposited collateral at a
+governed rate — is prior art from existing DeFi systems and is used here largely as it is
+understood elsewhere, with the CPI-adjusted rate and per-address redemption accounting layered on
+top.
+
+## 11. References
+
+- OpenZeppelin Contracts — `ERC20Votes`, `ERC20Permit`, `AccessControl`, `Governor`,
+  `TimelockController`, `Ownable2Step`: <https://docs.openzeppelin.com/contracts>
+- EIP-712, typed structured data hashing and signing: <https://eips.ethereum.org/EIPS/eip-712>
+- EIP-2612, permit extension for ERC-20: <https://eips.ethereum.org/EIPS/eip-2612>
+- US Bureau of Labor Statistics, Consumer Price Index: <https://www.bls.gov/cpi/>
+- US Treasury, Treasury Inflation-Protected Securities:
+  <https://www.treasurydirect.gov/marketable-securities/tips/>
+- Repository documentation index: [`../README.md`](../README.md)
+
+## 12. Summary
 
 Halal is a from-scratch attempt at a stablecoin that stabilizes purchasing power rather than
 nominal price, governed entirely by the people who hold it, with no upgrade path and no admin
