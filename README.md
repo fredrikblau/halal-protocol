@@ -11,7 +11,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Halal is a DAO-governed, CPI-indexed stablecoin protocol. **HLC** minted through its Peg Stability
-Module (PSM) is redeemable against a reserve asset such as DAI or USDC at a CPI-adjusted rate;
+Module (PSM) is redeemable against a reserve ERC-20, chosen per deployment, at a CPI-adjusted rate;
 the goal is for HLC's *purchasing power*, not just its nominal reserve-asset price, to stay roughly
 stable. The separate fixed genesis allocation (6,000,000 HLC to the team and 4,000,000 HLC to the
 treasury, both time-vested) is not reserve-backed. PSM issuance, protocol parameters, and treasury
