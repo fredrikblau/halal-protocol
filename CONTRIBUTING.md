@@ -25,12 +25,12 @@ for the clean-clone tool check, disposable local smoke test, and first contribut
 These tasks are intentionally bounded and do not require a wallet, private key, RPC credential,
 deployment, or real funds:
 
-- [#118 — verify the clean-clone quickstart on another environment](https://github.com/fredrikblau/halal-protocol/issues/118)
-- [#166 — add fail-closed deployment-manifest tests](https://github.com/fredrikblau/halal-protocol/issues/166)
-- [#173 — cover CPI adapter configuration and ownership boundaries](https://github.com/fredrikblau/halal-protocol/issues/173)
+The authoritative list is the live [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) filter, which cannot go stale. The
+[contributor map](docs/CONTRIBUTOR-MAP.md) adds scope and a verification path for each.
 
-The CPI source-policy task is already claimed in [PR #169](https://github.com/fredrikblau/halal-protocol/pull/169).
-Review or improve that PR rather than opening a duplicate.
+Before starting, check the issue for an existing assignee or a linked pull request, and comment
+with your intended approach. If a task already has an active contributor pull request, reviewing
+it is more useful than opening a competing implementation.
 
 Read the issue acceptance criteria, comment with your intended approach, and open a focused PR.
 If a task is already claimed or has an active contributor PR, choose another starter issue or
