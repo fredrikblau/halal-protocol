@@ -21,31 +21,29 @@ through [`SECURITY.md`](../SECURITY.md), not the issue.
 Choose the task that matches your interests; each issue includes a bounded scope, acceptance
 criteria, and a safe local verification path:
 
-- [CPI source policy documentation (#80)](https://github.com/fredrikblau/halal-protocol/issues/80) —
-  claimed in [contributor PR #169](https://github.com/fredrikblau/halal-protocol/pull/169); review or
-  improve that PR rather than opening a duplicate.
-- [Clean-clone verification on another environment (#118)](https://github.com/fredrikblau/halal-protocol/issues/118) —
-  follow the quickstart on a second environment and report tool versions, commands, and the final
-  result; no wallet, credentials, deployment, or real funds are needed.
+The live [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) filter is authoritative — if an entry below has been closed
+since this was written, trust the filter. Currently open and unassigned:
+
 - [Fail-closed deployment-manifest tests (#166)](https://github.com/fredrikblau/halal-protocol/issues/166) —
   add negative-path tests for the offline deployment recorder, including its no-write-on-failure
   boundary; use temporary fixtures and a fake `cast` binary with no wallet or RPC credentials.
 - [CPI adapter configuration and ownership tests (#173)](https://github.com/fredrikblau/halal-protocol/issues/173) —
   cover signer, threshold, and two-step ownership boundaries with deterministic local keys and a mock sink;
   no deployment or real credentials are needed.
-- [Protocol glossary documentation (#117)](https://github.com/fredrikblau/halal-protocol/issues/117) is
-  implemented in contributor-facing [PR #147](https://github.com/fredrikblau/halal-protocol/pull/147);
-  review its terminology against the current contracts instead of duplicating the implementation.
-- [Accessibility smoke coverage (#102)](https://github.com/fredrikblau/halal-protocol/issues/102) is
-  implemented in contributor-owned [PR #107](https://github.com/fredrikblau/halal-protocol/pull/107);
-  review or extend that PR rather than duplicating its implementation.
+
+Larger, less bounded work that still needs owners: an independent protocol reviewer
+([#126](https://github.com/fredrikblau/halal-protocol/issues/126)), the first Arbitrum Sepolia
+reference deployment ([#40](https://github.com/fredrikblau/halal-protocol/issues/40)), a production
+CPI adapter design review ([#17](https://github.com/fredrikblau/halal-protocol/issues/17)), and the
+frontend dependency majors ([#136](https://github.com/fredrikblau/halal-protocol/issues/136)).
+See [`NEXT-STEPS.md`](NEXT-STEPS.md) for why those are ordered the way they are.
 
 - The completed [release verification walkthrough](RELEASE-VERIFICATION.md) is a reference for
   clean-checkout tag, artifact, ABI, local-gate, and hosted-check review.
-- [Incident-response tabletop example (#86)](https://github.com/fredrikblau/halal-protocol/issues/86) —
-  rehearse detection, evidence preservation, governance response, and recovery verification for a
-  fictional protocol incident; use the completed [`stale-CPI example`](INCIDENT-RESPONSE-TABLETOP-EXAMPLE.md)
-  as a reference.
+- The completed [incident-response tabletop (#86)](https://github.com/fredrikblau/halal-protocol/issues/86)
+  is available as the [`stale-CPI example`](INCIDENT-RESPONSE-TABLETOP-EXAMPLE.md), which rehearses
+  detection, evidence preservation, governance response, and recovery verification. Use it as the
+  reference shape when running a tabletop for a different scenario.
 - The completed [read-only governance payload verifier (#90)](https://github.com/fredrikblau/halal-protocol/issues/90)
   is available at [`scripts/verify-governance-payload.mjs`](../scripts/verify-governance-payload.mjs).
 - The completed [deterministic governance payload property coverage (#91)](https://github.com/fredrikblau/halal-protocol/issues/91)

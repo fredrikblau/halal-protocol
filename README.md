@@ -43,17 +43,11 @@ Start with the [good first issues](https://github.com/fredrikblau/halal-protocol
   source series, publisher identity, cadence, freshness, fallback, updater custody, and
   incident response. This record is a proposal under review, not production approval.
 - Run `make verify` before opening a pull request.
-- Pick one of the three currently unclaimed [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22):
-  [clean-clone verification on another environment](https://github.com/fredrikblau/halal-protocol/issues/118) or
-  [fail-closed deployment-manifest tests](https://github.com/fredrikblau/halal-protocol/issues/166), or
-  [CPI adapter configuration and ownership tests](https://github.com/fredrikblau/halal-protocol/issues/173).
-  The CPI source-policy task is already claimed in [contributor PR #169](https://github.com/fredrikblau/halal-protocol/pull/169);
-  review or improve that PR instead of opening a duplicate.
-- Review the contributor's [protocol glossary PR](https://github.com/fredrikblau/halal-protocol/pull/147)
-  and verify its terminology against the current contracts and implementation.
-- Review or extend the contributor-owned [accessibility smoke-coverage PR](https://github.com/fredrikblau/halal-protocol/pull/107)
-  and its [tracking issue](https://github.com/fredrikblau/halal-protocol/issues/102); do not duplicate the
-  implementation unless the PR's author or maintainers request it.
+- Pick an unclaimed task from the live [good first issues](https://github.com/fredrikblau/halal-protocol/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) filter. These are deliberately
+  bounded and need no wallet, private key, RPC credential, deployment, or real funds. The
+  [contributor map](docs/CONTRIBUTOR-MAP.md) describes the current ones in more detail.
+- Comment on the issue with your intended approach before opening a pull request, so two people
+  do not build the same thing.
 - Help coordinate the first carefully gated [Arbitrum Sepolia deployment](https://github.com/fredrikblau/halal-protocol/issues/40).
 - Review the bounded [security challenge](https://github.com/fredrikblau/halal-protocol/issues/16) or
   [production CPI adapter design](https://github.com/fredrikblau/halal-protocol/issues/17).
