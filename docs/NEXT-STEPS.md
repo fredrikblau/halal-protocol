@@ -8,7 +8,9 @@ The protocol remains unaudited, has no public deployment, and no bug bounty. Not
 changes that. A task being listed here is not evidence that the underlying risk is solved.
 
 For the longer risk-ordered arc, see [`ROADMAP.md`](ROADMAP.md). This file is the shorter,
-current-state view.
+current-state view. If you are new to the protocol itself rather than to this backlog, read
+[`WHITEPAPER.md`](WHITEPAPER.md) first — it explains the mechanism and its trade-offs, which most
+of the work below assumes.
 
 ## 1. The two real gates
 
