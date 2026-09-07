@@ -6,6 +6,9 @@ deliberately ordered by risk reduction rather than feature count. The current co
 immutable, so production changes should normally arrive as separately reviewed modules granted
 narrow roles by governance.
 
+For the shorter "what should I work on today" view, including current blockers and known CI
+failure modes, see [`NEXT-STEPS.md`](NEXT-STEPS.md).
+
 ## Now: make the reference deployment audit-ready
 
 - Complete an independent smart-contract security review and publish the findings and remediation
@@ -18,8 +21,12 @@ narrow roles by governance.
   proposal review, and incident response ([`docs/OPERATOR-RUNBOOK.md`](OPERATOR-RUNBOOK.md)).
 - [x] Add independent differential arithmetic checks across every supported reserve-decimal count
   and CPI bound ([`contracts/test/HalalPSMArithmetic.t.sol`](../contracts/test/HalalPSMArithmetic.t.sol)).
-- Extend adversarial testing with a broader reserve-token matrix and longer stateful runs on every
-  release candidate.
+- [x] Extend the adversarial reserve-token matrix. The stateful suite now models fee-on-transfer,
+  false-returning, no-return, transfer-capped, and rebasing reserve tokens
+  ([`contracts/test/HalalPSMAdversarialInvariant.t.sol`](../contracts/test/HalalPSMAdversarialInvariant.t.sol)).
+- Run longer stateful invariant campaigns on every release candidate.
+- [x] Enforce documented Foundry test counts against the live suite so contributor-facing evidence
+  cannot drift (`make test-counts`).
 
 ## Next: make the system useful to real participants
 

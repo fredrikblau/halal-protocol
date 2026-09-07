@@ -126,6 +126,19 @@ the responsible-disclosure process if you find a vulnerability, and please don't
 in this README, or in `docs/`, as a claim that the software is production-ready — it's an
 active, unaudited, open-source project, and honesty about that is a design goal in its own right.
 
+### What happens next
+
+Two things gate everything else, and neither is waiting on more code:
+
+1. **An independent security review** ([issue #126](https://github.com/fredrikblau/halal-protocol/issues/126)).
+   The contracts are immutable by design, so review has to precede any deployment that matters.
+2. **The first Arbitrum Sepolia reference deployment**
+   ([issue #40](https://github.com/fredrikblau/halal-protocol/issues/40)), which needs a documented
+   reserve token, multisig beneficiaries, and a named CPI updater operator before it can proceed.
+
+[`docs/NEXT-STEPS.md`](docs/NEXT-STEPS.md) has the full current-state view: what is blocked on what,
+the highest-value bounded tasks, and the known CI failure modes that are not caused by your change.
+
 ## Architecture, briefly
 
 - **`HalalToken` (HLC)** — `ERC20Votes` + `ERC20Permit` + `AccessControl`. Genesis 6M/4M
