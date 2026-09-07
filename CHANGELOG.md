@@ -4,10 +4,66 @@ All notable changes to this project are documented here.
 
 ## Unreleased
 
-- Added governance-boundary regression coverage for CPI adapter signer duplication and two-step
-  ownership acceptance, plus DAO quorum and timelock policy behavior.
-- Synchronized current contributor, technical, governance, architecture, and security-review
-  documentation with the 199-test Solidity suite (188 ordinary tests and 11 stateful invariants).
+Sixty-five changes have merged since `0.1.0-alpha.266`. The entries below group them by the
+reason they were made rather than by commit order.
+
+### Contract safety
+
+- `HalalToken` no longer grants the deployer `MINTER_ROLE` at construction; deployment grants
+  minting directly to the PSM, so no key is ever briefly an issuer.
+- The irreversible genesis mint rejects externally owned or undeployed recipients.
+- `MINTER_ROLE` and `BURNER_ROLE` are rejected for externally owned accounts, so governance
+  cannot turn a private key into an unbounded issuer.
+- `CPIReportAdapter` rejects reports older than 90 days, matching the PSM's freshness bound even
+  if it is ever pointed at a sink that does not enforce one.
+- The adapter verifies that the sink actually accepted a report — both the watermark and the
+  stored rate — before recording its own state, so a no-op sink cannot look healthy.
+- The PSM and the offline handoff builder reject empty and whitespace-only CPI source labels,
+  including vertical tab and form feed.
+
+### Fail-closed behaviour in the dApp and tooling
+
+- Deployment-integrity verification fails closed when a refresh fails, instead of leaving
+  signing enabled from a stale successful read.
+- CPI freshness and PSM report reads that fail are surfaced as blocking rather than silently
+  treated as healthy or legacy.
+- The deployment verifier mirrors the canonical beneficiary rules, requires contract-backed
+  production custody, rejects cleartext remote RPC URLs, and restricts the local escape hatch to
+  loopback Anvil on chain 31337.
+- The standalone health check requires a configured CPI adapter to hold the PSM updater role.
+- Signature preflight fails closed when `cast wallet verify` does not return a positive result.
+
+### Testing
+
+- Adversarial reserve-token invariants now model transfer-capped and rebasing tokens alongside
+  fee-on-transfer, false-returning, and no-return behaviour.
+- Added coverage for governance boundaries, adapter signer rotation and configuration gates,
+  permit and redeemable transfer validation, zero-receipt reserve transfers, deployment manifest
+  round trips, and adapter health failure branches.
+- Round-trip fuzzing bounds its input instead of rejecting almost every sample, so higher run
+  counts exercise the property rather than exhausting assume rejections.
+- Fixed an intermittent accessibility-suite failure that was a gas-estimation shortfall rather
+  than a revert, and added diagnostics that report gas, the decoded error, and live PSM state.
+
+### Continuous integration
+
+- Documented Foundry test counts are now verified against the live suite (`make test-counts`).
+- Deep contract checks run on pull requests; the docs-only path no longer skips the gate
+  incorrectly.
+- `pnpm audit` retries transport failures so an npm outage does not fail an unrelated change.
+- Frontend verification stages are individually bounded, ShellCheck is pinned for operational
+  scripts, Slither's Python dependencies are hash-locked, and workflow syntax is linted.
+
+### Documentation
+
+- The whitepaper gained the settlement arithmetic, a parameter table taken from the contracts, a
+  security model with its explicit non-goals, prior art, and references; two claims that no longer
+  matched the implementation were corrected.
+- Added a documentation index for the `docs/` folder, a protocol glossary, a security-review
+  quickstart, and a current next-steps document for contributors and agents.
+- The contributor funnel no longer points at closed issues or merged pull requests.
+- Synchronized documented test evidence with the current suite: 214 Foundry tests (198
+  unit/configuration plus 16 stateful invariants).
 
 ## 0.1.0-alpha.266 - 2026-08-27
 
