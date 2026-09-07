@@ -5,7 +5,8 @@ behavior. A useful contribution leaves a test, a reproducible command, or a docu
 that another reviewer can check.
 
 New contributors can use the [ten-minute quickstart](CONTRIBUTOR-QUICKSTART.md) to verify a clean
-checkout before choosing an issue.
+checkout before choosing an issue. The [documentation index](README.md) groups every document in
+this folder by purpose if you are looking for something this map does not cover.
 
 Use the [protocol glossary](GLOSSARY.md) for concise definitions and links to the implementation
 of the terms used throughout this map.

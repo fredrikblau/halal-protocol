@@ -161,6 +161,9 @@ the highest-value bounded tasks, and the known CI failure modes that are not cau
 For the full picture — diagrams, the access-control matrix, a worked governance-proposal
 walkthrough, and the exact API surface — see:
 
+- [`docs/`](docs/README.md) — the documentation index, grouped by what you are trying to do:
+  understand the protocol, run it locally, contribute, review its security, choose a reserve
+  asset, govern it, or operate a deployment.
 - [`docs/WHITEPAPER.md`](docs/WHITEPAPER.md) — the protocol whitepaper: the problem, the CPI-peg
   mechanism and its settlement arithmetic, the bounds and guards that constrain it, tokenomics,
   governance, the security model and what it does not cover, prior art, and an honest risks
