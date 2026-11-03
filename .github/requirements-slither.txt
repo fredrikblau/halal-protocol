@@ -298,9 +298,9 @@ cbor2==6.1.4 \
     --hash=sha256:e8097e8259b78c8feb5dd5b833b23f83ed588e821ef44cf1455082cfc9434440 \
     --hash=sha256:f3fc7d15cba4174373df2496070faa4a927fe3ed772130d281808120aec7b61c
     # via crytic-compile
-certifi==2026.7.22 \
-    --hash=sha256:62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775 \
-    --hash=sha256:741e2c3b351ddf169a738da9f2c048608ff7f2c5cc02f1ebc6b118bb090d5d55
+certifi==2026.10.18 \
+    --hash=sha256:73191c47aaa79da394e8fee2dbc2ec827432cab56311122c9e47abf79e390f62 \
+    --hash=sha256:b9995d97b64d0431a5af837d8ca8cd6238104d1f319f04bd93ea43124d6c861e
     # via requests
 charset-normalizer==3.5.1 \
     --hash=sha256:00668ebb0609751758682eb0b5857e7c35b9f00e84dfdef062e103244ec94d45 \
@@ -1520,7 +1520,7 @@ rlp==5.0.0 \
 slither-analyzer==0.11.6 \
     --hash=sha256:01f809198d3f171e2d768569c0054c96af5736614e183c64f42c9b51636c33c1 \
     --hash=sha256:72aff6c1924a8641c1c8e4d84f9a4e6c97b5bfb3221bf71a11ffaee46d2f7da2
-    # via -r .github/requirements-slither.in
+    # via -r requirements-slither.in
 solc-select==1.2.0 \
     --hash=sha256:ad0a7afcae05061ce5e7632950b1fa0193ba9eaf05e4956f86effee024c6fb07 \
     --hash=sha256:dd00cab29229570c4399058852a4052f2120d87c7e341e35f04794a13cfdd1de
